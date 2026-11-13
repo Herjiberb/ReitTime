@@ -37,3 +37,5 @@ body.in #nav{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:6;justi
 .sf.on input{width:min(60vw,320px);padding:8px 12px;opacity:1;border-width:1px}
 body.sx #top .brand{display:none}body.sx .sf{flex:1}body.sx .sf.on input{flex:1;width:auto}
 .swr{display:flex;width:100%;text-align:left;margin:6px 0}.swr span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.act .vb{display:flex;align-items:center;gap:6px;background:var(--bd);border-radius:99px;padding:6px 12px;font-weight:700}.act .vb.on{background:rgba(31,184,104,.16);color:var(--gr,#1fb868)}.act .vb.dn.on{background:rgba(255,138,31,.16);color:var(--o)}
+.vopt{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--bd);border:2px solid transparent;border-radius:18px;padding:14px;margin:8px 0;font:inherit;color:inherit;cursor:pointer}.vopt small{display:block;color:var(--mu)}.vopt.sel{border-color:var(--gr,#1fb868)}.vopt.dn.sel{border-color:var(--o)}
