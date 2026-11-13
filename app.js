@@ -13,6 +13,7 @@ document.addEventListener('click',e=>{const x=e.target.closest('.sbar .smx');if(
 const EQ='<div class="eq">'+'<i></i>'.repeat(7)+'</div>',SK='<div class="card sk"><div class="row" style="flex-wrap:nowrap"><i class="sc"></i><div style="flex:1"><i class="sl w40"></i><i class="sl w25"></i></div></div><i class="sl"></i><i class="sl w80"></i><i class="sb"></i></div>',LOADER=`<div class="ldr">${EQ}<span class="mu">Loading…</span></div>${SK}${SK}`;
 const S={st:{},sq:0,aff:{},mv:{},pv:{},bm:new Set(),posts:{},fol:new Set(),joined:new Set(),rev:new Set(),c:{scene:null,poll:false,moods:[],cw:false,cwt:'',ln:false,lk:''},tab:'fy'};
 let me,mp;const isAdm=()=>mp&&mp.is_admin;
+const acts={};
 const hexOk=x=>/^#[0-9a-f]{6}$/i.test(x||'');
 
 /* ---------- ICONS (custom two-tone SVG, no emojis) ---------- */
@@ -274,7 +275,7 @@ async function settings(){const {data}=await sb.auth.mfa.listFactors();const f=d
 
 /* ---------- ACTIONS ---------- */
 const adj=(p,v,d)=>v==1?p.ups+=d:p.downs+=d,redraw=id=>{const el=document.querySelector(`[data-card="${id}"]`);if(el)el.outerHTML=postCard(S.posts[id]);reRaw&&reRaw(id)};
-const acts={
+Object.assign(acts,{
  menu(d,btn){if(popEl&&popEl._b===btn)return closePop();const items=[{t:'Reals',ic:'reals',h:'#/reals'},{t:'My profile',ic:'user',h:'#/u'},{t:'Saved & drafts',ic:'bookmark',h:'#/saved'},{t:'Settings',ic:'gear',h:'#/set'},{t:'Switch theme',ic:'theme',f:'theme'},...(isAdm()?[{t:'Admin reports',ic:'shield',h:'#/admin'}]:[]),{t:'Log out',ic:'out',f:'out'}];popup(btn,items,it=>it.h?location.hash=it.h:acts[it.f]({}),'menu');popEl._b=btn},
  async copykey(d){try{await navigator.clipboard.writeText(d.k);toast('Key copied')}catch{prompt('Copy key:',d.k)}},
  tab(d){S.tab=d.t;R()},reload(){R()},theme(){setTheme(document.documentElement.dataset.theme=='dark'?'light':'dark')},
@@ -325,7 +326,7 @@ const acts={
  async adm(d,el){const {op,id,rid}=d;if(op=='hidep')await sb.from('posts').update({hidden:true}).eq('id',id);if(op=='hidec')await sb.from('comments').update({hidden:true}).eq('id',id);if(op=='ban')await sb.rpc('admin_ban',{uid:id,b:true});await sb.from('reports').update({status:'closed'}).eq('id',rid);el.closest('.card').remove();toast('Done')},
  async mfaon(){const {data,error}=await sb.auth.mfa.enroll({factorType:'totp'});if(error)return toast(error.message);const qr='data:image/svg+xml,'+encodeURIComponent(String(data.totp.qr_code).replace(/^data:image\/svg\+xml;utf-8,/,''));sheet(`<h3>${ic('lock',22)} Set up two-factor</h3><p class="mu">Scan this code with Google Authenticator, Authy or 1Password.</p><div class="qr"><img src="${qr}" alt="2FA QR code"></div><div class="keybox"><small>Can't scan? Enter this key manually</small><code>${esc(data.totp.secret)}</code><button type="button" class="chip" data-act="copykey" data-k="${esc(data.totp.secret)}">${ic('link',16)} Copy key</button></div><input id="mc" class="code" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code"><button class="btn" id="mv">${ic('check',18)} Verify & enable</button>`);
   $('#mv').onclick=async()=>{const {error}=await sb.auth.mfa.challengeAndVerify({factorId:data.id,code:$('#mc').value});if(error)return toast(error.message);closeSheet();toast('2FA enabled');R()}},
- async mfaoff(d){const {error}=await sb.auth.mfa.unenroll({factorId:d.id});toast(error?error.message:'2FA disabled');R()}};
+ async mfaoff(d){const {error}=await sb.auth.mfa.unenroll({factorId:d.id});toast(error?error.message:'2FA disabled');R()}});
 
 /* ---------- stars, seen-tracking, search, edit modal ---------- */
 let SEEN={};try{SEEN=JSON.parse(localStorage.rtseen||'{}')}catch{}const LV=+(localStorage.rtlv||0);let seenT=0;
