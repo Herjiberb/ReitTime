@@ -15,6 +15,7 @@ const O='var(--o,#ff8a1f)',G='var(--gr,#1fb868)',W='#fff';
 const pp=(d,f,x='')=>`<path d="${d}" fill="${f}" ${x}/>`,kk=(d,s,w=2)=>`<path d="${d}" fill="none" stroke="${s}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`,cc=(x,y,r,f,o='')=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${f}" ${o}/>`;
 const face=b=>cc(12,12,10,b);
 const I={
+clock:cc(12,12,10,G)+kk('M12 6.5V12l3.5 2',W,2.2),
 vote:pp('M12 2a10 10 0 0 0-10 10h20A10 10 0 0 0 12 2z',G)+pp('M2 12a10 10 0 0 0 20 0z',O)+kk('M8.5 9 12 5.5 15.5 9',W,2.2)+kk('M8.5 15 12 18.5 15.5 15',W,2.2)+kk('M3 12h18',W,1.6),
 starO:kk('M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2l-6.1 3.4 1.4-6.8L2.2 9.1l6.9-.8z','currentColor',1.8),
 sstar:pp('M12 1.5l9.5 16.5h-19zM12 22.5 2.5 6h19z','#ffb400','stroke="#ff8a1f" stroke-width="1" stroke-linejoin="round"')+cc(12,12,2.4,W),
@@ -327,15 +328,44 @@ async function starsPg(){const {data}=await sb.from('stars').select('post_id,lvl
   $('#sl').innerHTML=r.map(x=>{const a=x.post.author||{};return `<div class="card col"><div class="row">${ic(x.lvl==2?'sstar':'star',22)}<b>${esc(a.display_name||a.username)}</b><span class="mu">@${esc(a.username)} · ${ago(x.post.created_at)}</span></div><a href="#/p/${x.post_id}" style="color:inherit">${esc((x.post.body||'(character post)').slice(0,180))}</a><div class="row wrap">${x.lvl==2?`<button class="chip" data-act="smdn" data-id="${x.post_id}">${ic('star',16)} Downplay to star</button>`:`<button class="chip" data-act="smup" data-id="${x.post_id}">${ic('sstar',16)} Make super</button>`}<button class="chip" data-act="smrm" data-id="${x.post_id}">${ic('trash',16)} Remove</button></div></div>`}).join('')||`<p class="empty">${ic('star',28)}<br>${L.length?'No matches.':'Nothing starred yet.'}</p>`};
  $('#sq').oninput=draw;$('#sfl').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;f=b.dataset.k;$('#sfl').querySelectorAll('.chip').forEach(x=>x.classList.toggle('sel',x==b));draw()};draw()}
 Object.assign(acts,{async smrm(d){if(await setStar(d.id,0))starsPg()},async smdn(d){if(await setStar(d.id,1))starsPg()},smup(d){starHold(d.id,starsPg)},
- srch(){const f=$('#sf'),on=!f.classList.contains('on');f.classList.toggle('on',on);document.body.classList.toggle('sx',on);if(on)$('#si').focus()}});
-function initSearch(){const f=$('#sf'),i=$('#si'),off=()=>{f.classList.remove('on');document.body.classList.remove('sx');i.value=''};
- f.onsubmit=e=>{e.preventDefault();const v=i.value.trim();if(v.length<2)return toast('Type at least 2 characters');off();i.blur();location.hash='#/s/'+encodeURIComponent(v)};
- i.onkeydown=e=>e.key=='Escape'&&off();i.onblur=()=>setTimeout(()=>{if(!i.value)off()},150);
- if(!initSearch.k){initSearch.k=1;addEventListener('keydown',e=>{if(e.key=='/'&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){e.preventDefault();$('#sf').classList.contains('on')||acts.srch()}})}}
-async function searchPg(q){q=(q||'').trim();
- A.innerHTML=H('search','Search')+`<form id="sp" class="row"><input id="spi" value="${esc(q)}" placeholder="Posts, people, #tags, communities" maxlength="60" style="flex:1"><button class="btn" aria-label="Search">${ic('search',18)}</button></form><div id="sr"></div>`;
- $('#sp').onsubmit=e=>{e.preventDefault();const v=$('#spi').value.trim();if(v.length>1)location.hash='#/s/'+encodeURIComponent(v)};
- if(q.length<2)return $('#sr').innerHTML='<p class="mu">Type at least 2 characters.</p>';
+ srch(){openSearch()}});
+function initSearch(){if(initSearch.k)return;initSearch.k=1;addEventListener('keydown',e=>{if(e.key=='/'&&!e.ctrlKey&&!e.metaKey&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)&&!document.querySelector('.smd')){e.preventDefault();openSearch()}})}
+const normQ=s=>String(s||'').normalize('NFKC').replace(/[\u0000-\u001f\u007f\u200b-\u200f\u202a-\u202e\u2060\ufeff]/g,'').replace(/[^\p{L}\p{N}\s#_'-]/gu,'').replace(/\s+/g,' ').trim().replace(/#{2,}/g,'#').slice(0,40);
+const qOk=q=>q.length>=2&&/[\p{L}\p{N}]/u.test(q);
+let REC=[];try{REC=JSON.parse(localStorage.rtrs||'[]').filter(x=>typeof x=='string').slice(0,8)}catch{}
+const saveRec=()=>{try{localStorage.rtrs=JSON.stringify(REC)}catch{}};
+const logged=new Set();
+function goSearch(v){const q=normQ(v);if(!qOk(q))return toast('Use 2–40 letters, numbers, # _ - or \'');
+ REC=[q,...REC.filter(x=>x.toLowerCase()!=q.toLowerCase())].slice(0,8);saveRec();
+ const k=q.toLowerCase();if(!logged.has(k)){logged.add(k);sb.rpc('log_search',{q}).then(()=>{},()=>{})}
+ closeSheet(true);const h='#/s/'+encodeURIComponent(q);location.hash==h?R():location.hash=h}
+const sugC=new Map();let trendC=null;
+async function sugFor(p){p=p.toLowerCase();if(sugC.has(p))return sugC.get(p);const {data}=await sb.from('search_terms').select('term,hits').like('term',p.replace(/[\\%_]/g,'\\$&')+'%').gte('hits',2).order('hits',{ascending:false}).limit(6);const r=data||[];sugC.size>100&&sugC.clear();sugC.set(p,r);return r}
+async function trendFor(){if(trendC&&Date.now()-trendC.t<3e5)return trendC.d;const since=new Date(Date.now()-30*864e5).toISOString();const {data}=await sb.from('search_terms').select('term,hits').gte('hits',3).gte('updated_at',since).order('hits',{ascending:false}).limit(8);trendC={t:Date.now(),d:data||[]};return trendC.d}
+function openSearch(){closePop();closeSheet(true);const el=document.createElement('div');el.className='bd smd';
+ el.innerHTML=`<div class="smp"><form class="smf" autocomplete="off">${ic('search',22)}<input id="smi" maxlength="40" inputmode="search" enterkeyhint="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Search posts, people, #tags…" aria-label="Search"><button type="button" class="smx" id="smc" aria-label="Clear" hidden>${ic('x',16)}</button><button type="button" class="smk" id="smk">Cancel</button></form><div class="sml" id="sml" role="listbox"></div><div class="smh">Letters, numbers, # _ - ' · 2–40 characters</div></div>`;
+ document.body.append(el);const inp=el.querySelector('#smi'),L=el.querySelector('#sml');requestAnimationFrame(()=>el.classList.add('on'));inp.focus();
+ let items=[],idx=-1,tm=0,seq=0;
+ const hl=(t,q)=>t.toLowerCase().startsWith(q.toLowerCase())?`<b>${esc(t.slice(0,q.length))}</b>${esc(t.slice(q.length))}`:esc(t);
+ const row=(it,i,q)=>`<button type="button" class="smr ${i==idx?'hl':''}" role="option" data-i="${i}">${ic(it.k=='r'?'clock':it.k=='t'?'flame':'search',20)}<span>${it.k=='g'?`Search for <b>${esc(it.term)}</b>`:hl(it.term,q)}</span>${it.k=='r'?`<i class="smd2" data-rm="${i}" aria-label="Remove">${ic('x',14)}</i>`:''}</button>`;
+ const draw=(q,pop)=>{const lq=q.toLowerCase();items=[];
+  if(!qOk(q)){REC.forEach(t=>items.push({k:'r',term:t}));(pop||[]).filter(x=>!REC.some(r=>r.toLowerCase()==x.term)).forEach(x=>items.push({k:'t',term:x.term}));
+   L.innerHTML=(REC.length?`<div class="smg">Recent <button type="button" class="smcl" id="smca">Clear</button></div>`:'')+items.filter(x=>x.k=='r').map((x,i)=>row(x,i,q)).join('')+((pop||[]).length?`<div class="smg">Popular right now</div>`:'')+items.map((x,i)=>x.k=='t'?row(x,i,q):'').join('')||`<p class="mu smemp">Start typing to search.</p>`;return}
+  items.push({k:'g',term:q});REC.filter(t=>t.toLowerCase().startsWith(lq)&&t.toLowerCase()!=lq).slice(0,3).forEach(t=>items.push({k:'r',term:t}));
+  (pop||[]).forEach(x=>{if(x.term!=lq&&!items.some(i=>i.term.toLowerCase()==x.term))items.push({k:'p',term:x.term})});
+  L.innerHTML=items.map((x,i)=>row(x,i,q)).join('')};
+ const refresh=async()=>{const q=normQ(inp.value),my=++seq;el.querySelector('#smc').hidden=!inp.value;idx=-1;draw(q,null);clearTimeout(tm);
+  tm=setTimeout(async()=>{try{const pop=qOk(q)?await sugFor(q):await trendFor();if(my===seq)draw(q,pop)}catch{}},qOk(q)?180:0)};
+ inp.addEventListener('input',()=>{const c=inp.value.replace(/[^\p{L}\p{N}\s#_'-]/gu,'');if(c!==inp.value)inp.value=c;refresh()});
+ inp.addEventListener('keydown',e=>{if(e.key=='Escape')closeSheet();else if(e.key=='ArrowDown'||e.key=='ArrowUp'){e.preventDefault();if(!items.length)return;idx=(idx+(e.key=='ArrowDown'?1:-1)+items.length)%items.length;L.querySelectorAll('.smr').forEach((b,i)=>b.classList.toggle('hl',i==idx));L.querySelector('.hl')?.scrollIntoView({block:'nearest'})}});
+ el.querySelector('.smf').onsubmit=e=>{e.preventDefault();goSearch(idx>=0&&items[idx]?items[idx].term:inp.value)};
+ el.querySelector('#smc').onclick=()=>{inp.value='';inp.focus();refresh()};el.querySelector('#smk').onclick=()=>closeSheet();
+ L.onclick=e=>{const r=e.target.closest('[data-rm]');if(r){e.stopPropagation();REC.splice(+r.dataset.rm,1);saveRec();refresh();return}if(e.target.closest('#smca')){REC=[];saveRec();refresh();return}const b=e.target.closest('.smr');if(b&&items[+b.dataset.i])goSearch(items[+b.dataset.i].term)};
+ el.onclick=e=>{if(e.target===el)closeSheet()};refresh()}
+async function searchPg(q){q=normQ(q);
+ A.innerHTML=H('search','Search')+`<form id="sp" class="row"><input id="spi" value="${esc(q)}" placeholder="Posts, people, #tags, communities" maxlength="40" style="flex:1" autocapitalize="off"><button class="btn" aria-label="Search">${ic('search',18)}</button></form><div id="sr"></div>`;
+ $('#sp').onsubmit=e=>{e.preventDefault();goSearch($('#spi').value)};
+ if(!qOk(q))return $('#sr').innerHTML='<p class="mu">Type at least 2 characters.</p>';
  const t=q.replace(/^#/,'').replace(/[%_,()*\\"]/g,'').trim(),like='%'+t+'%',tg=t.toLowerCase().replace(/\W/g,'');
  const [u,c,ps]=await Promise.all([sb.from('profiles').select('username,display_name,scene').or(`username.ilike.${like},display_name.ilike.${like}`).limit(6),sb.from('communities').select('slug,name').ilike('name',like).limit(5),loadPosts(x=>x.or(`body.ilike.${like}`+(tg?`,tags.cs.{${tg}}`:'')).limit(30))]);
  $('#sr').innerHTML=((u.data||[]).length?H('people','People')+u.data.map(x=>`<a class="card row" href="#/u/${esc(x.username)}">${av(x)}<b>${esc(x.display_name||x.username)}</b>${badge(x)} <span class="mu">@${esc(x.username)}</span></a>`).join(''):'')+((c.data||[]).length?H('globe','Communities')+c.data.map(x=>`<a class="card" href="#/c/${esc(x.slug)}"><b>${esc(x.name)}</b></a>`).join(''):'')+H('chat','Posts')+cards(ps);observe()}
@@ -359,7 +389,7 @@ async function R(){closeSheet(true);const [,a,b]=location.hash.split('/');docume
  A.innerHTML='<div class="load">Loading…</div>';const P={'':feed,new:compose,c:comm,u:profile,tag:tagPg,p:postPg,saved,admin,set:settings,stars:starsPg,s:searchPg};try{await(P[a]||feed)(b?decodeURIComponent(b):b);scrollTo(0,0);observe()}catch(e){console.error(e);A.innerHTML='<p class="empty">Something went wrong. Check your Supabase setup.</p>'}}
 async function start(u){me=u;mp=(await sb.from('profiles').select('*').eq('id',u.id).maybeSingle()).data;if(!mp){const r=await sb.rpc('ensure_profile');if(r.error){console.error(r.error);return toast("Couldn't create your profile: "+r.error.message)}mp=r.data}if(!mp)return toast('Profile not found — run fix_profiles.sql in Supabase');
  const [f,j]=await Promise.all([sb.from('follows').select('following').eq('follower',u.id),sb.from('community_members').select('community_id').eq('user_id',u.id)]);S.fol=new Set((f.data||[]).map(x=>x.following));S.joined=new Set((j.data||[]).map(x=>x.community_id));
- document.body.classList.add('in');$('#top').innerHTML=`<a href="#/" class="brand">${LOGO}<b>ReitTime</b></a><form id="sf" class="sf" autocomplete="off"><button type="button" class="lnk" data-act="srch" aria-label="Search">${ic('search',24)}</button><input id="si" placeholder="Search posts, people, tags…" maxlength="60" enterkeyhint="search"></form><button class="lnk meb" data-act="menu" aria-label="Menu">${av(mp)}${ic('caret',18)}</button>`;$('#nav').innerHTML=NAV.map(n=>`<a href="#/${n[0]}" class="${n[2]||''}" aria-label="${n[1]}">${ic(n[1],n[2]?28:26)}</a>`).join('');
+ document.body.classList.add('in');$('#top').innerHTML=`<a href="#/" class="brand">${LOGO}<b>ReitTime</b></a><button type="button" class="lnk" data-act="srch" aria-label="Search">${ic('search',24)}</button><button class="lnk meb" data-act="menu" aria-label="Menu">${av(mp)}${ic('caret',18)}</button>`;$('#nav').innerHTML=NAV.map(n=>`<a href="#/${n[0]}" class="${n[2]||''}" aria-label="${n[1]}">${ic(n[1],n[2]?28:26)}</a>`).join('');
  await loadMine();initSearch();
  sb.channel('posts').on('postgres_changes',{event:'INSERT',schema:'public',table:'posts'},pl=>{const n=$('#newp');if(n&&pl.new.user_id!==me.id)n.innerHTML=`<button class="pill" data-act="reload">${ic('arrowup',16)} New posts</button>`}).subscribe();
  if(!S.started){S.started=1;addEventListener('hashchange',R)}R()}
