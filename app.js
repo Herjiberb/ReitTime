@@ -15,6 +15,7 @@ const O='var(--o,#ff8a1f)',G='var(--gr,#1fb868)',W='#fff';
 const pp=(d,f,x='')=>`<path d="${d}" fill="${f}" ${x}/>`,kk=(d,s,w=2)=>`<path d="${d}" fill="none" stroke="${s}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`,cc=(x,y,r,f,o='')=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${f}" ${o}/>`;
 const face=b=>cc(12,12,10,b);
 const I={
+reals:pp('M8.5 2h7A3.5 3.5 0 0 1 19 5.5v13a3.5 3.5 0 0 1-3.5 3.5h-7A3.5 3.5 0 0 1 5 18.5v-13A3.5 3.5 0 0 1 8.5 2z',G)+pp('M5 14l14-5v9.5a3.5 3.5 0 0 1-3.5 3.5h-7A3.5 3.5 0 0 1 5 18.5z',O)+pp('M10.2 7.4v5.8l4.8-2.9z',W)+pp('M20 .8l.9 1.9 1.9.9-1.9.9L20 6.4l-.9-1.9-1.9-.9 1.9-.9z','#ffd24a'),
 clock:cc(12,12,10,G)+kk('M12 6.5V12l3.5 2',W,2.2),
 vote:pp('M12 2a10 10 0 0 0-10 10h20A10 10 0 0 0 12 2z',G)+pp('M2 12a10 10 0 0 0 20 0z',O)+kk('M8.5 9 12 5.5 15.5 9',W,2.2)+kk('M8.5 15 12 18.5 15.5 15',W,2.2)+kk('M3 12h18',W,1.6),
 starO:kk('M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2l-6.1 3.4 1.4-6.8L2.2 9.1l6.9-.8z','currentColor',1.8),
@@ -201,7 +202,7 @@ async function feed(){const {data:cs}=await sb.from('communities').select('slug,
  const chips=`<div class="chips"><a class="chip" href="#/c">${ic('globe',18)} All communities</a>${(cs||[]).sort((a,b)=>S.joined.has(b.id)-S.joined.has(a.id)).map(c=>`<a class="chip" href="#/c/${esc(c.slug)}">${c.featured?ic('star',16)+' ':''}${esc(c.name)}</a>`).join('')}</div>`;
  let ps=await loadPosts();const tc={};ps.forEach(p=>(p.tags||[]).forEach(t=>tc[t]=(tc[t]||0)+1));const tr=Object.entries(tc).sort((a,b)=>b[1]-a[1]).slice(0,8);
  ps=S.tab=='fol'?ps.filter(p=>S.fol.has(p.user_id)||p.user_id===me.id):rank(ps);
- A.innerHTML=`${chips}<a class="card row quick" href="#/new">${av(mp)}<span class="mu" style="flex:1">What's happening?</span>${ic('pen',22)}</a>${tr.length?`<div class="chips trend">${ic('tag',18)}${tr.map(([t])=>`<a class="chip" href="#/tag/${esc(t)}">#${esc(t)}</a>`).join('')}</div>`:''}<div class="tabs"><button class="${S.tab!='fol'?'on':''}" data-act="tab" data-t="fy">${ic('flame',18)} For you</button><button class="${S.tab=='fol'?'on':''}" data-act="tab" data-t="fol">${ic('people',18)} Following</button></div><div id="newp"></div>${cards(ps)}`}
+ A.innerHTML=`${chips}<a class="card row quick" href="#/new">${av(mp)}<span class="mu" style="flex:1">What's happening?</span>${ic('pen',22)}</a><a class="card row quick reals-pill" href="#/reals">${ic('reals',30)}<span style="flex:1"><b>Reals</b><br><span class="mu">Swipe through posts picked for you</span></span>${ic('caret',18,'chev')}</a>${tr.length?`<div class="chips trend">${ic('tag',18)}${tr.map(([t])=>`<a class="chip" href="#/tag/${esc(t)}">#${esc(t)}</a>`).join('')}</div>`:''}<div class="tabs"><button class="${S.tab!='fol'?'on':''}" data-act="tab" data-t="fy">${ic('flame',18)} For you</button><button class="${S.tab=='fol'?'on':''}" data-act="tab" data-t="fol">${ic('people',18)} Following</button></div><div id="newp"></div>${cards(ps)}`}
 async function tagPg(t){const ps=await loadPosts(q=>q.contains('tags',[t.toLowerCase()]));A.innerHTML=H('tag','#'+esc(t))+cards(ps)}
 async function postPg(id){const ps=await loadPosts(q=>q.eq('id',id));A.innerHTML=`<a class="chip" href="#/">${ic('home',18)} Home</a>`+cards(ps)}
 async function saved(){const [b,d]=await Promise.all([sb.from('bookmarks').select('post_id').order('created_at',{ascending:false}),sb.from('drafts').select('*').order('created_at',{ascending:false})]);const ids=(b.data||[]).map(x=>x.post_id);const ps=ids.length?await loadPosts(q=>q.in('id',ids)):[];
@@ -239,9 +240,9 @@ async function settings(){const {data}=await sb.auth.mfa.listFactors();const f=d
  <h4 class="sg"></h4>${row('out','Log out','Sign out on this device','data-act="out"','danger')}`}
 
 /* ---------- ACTIONS ---------- */
-const adj=(p,v,d)=>v==1?p.ups+=d:p.downs+=d,redraw=id=>{const el=document.querySelector(`[data-card="${id}"]`);if(el)el.outerHTML=postCard(S.posts[id])};
+const adj=(p,v,d)=>v==1?p.ups+=d:p.downs+=d,redraw=id=>{const el=document.querySelector(`[data-card="${id}"]`);if(el)el.outerHTML=postCard(S.posts[id]);reRaw&&reRaw(id)};
 const acts={
- menu(d,btn){if(popEl&&popEl._b===btn)return closePop();const items=[{t:'My profile',ic:'user',h:'#/u'},{t:'Saved & drafts',ic:'bookmark',h:'#/saved'},{t:'Settings',ic:'gear',h:'#/set'},{t:'Switch theme',ic:'theme',f:'theme'},...(isAdm()?[{t:'Admin reports',ic:'shield',h:'#/admin'}]:[]),{t:'Log out',ic:'out',f:'out'}];popup(btn,items,it=>it.h?location.hash=it.h:acts[it.f]({}),'menu');popEl._b=btn},
+ menu(d,btn){if(popEl&&popEl._b===btn)return closePop();const items=[{t:'Reals',ic:'reals',h:'#/reals'},{t:'My profile',ic:'user',h:'#/u'},{t:'Saved & drafts',ic:'bookmark',h:'#/saved'},{t:'Settings',ic:'gear',h:'#/set'},{t:'Switch theme',ic:'theme',f:'theme'},...(isAdm()?[{t:'Admin reports',ic:'shield',h:'#/admin'}]:[]),{t:'Log out',ic:'out',f:'out'}];popup(btn,items,it=>it.h?location.hash=it.h:acts[it.f]({}),'menu');popEl._b=btn},
  async copykey(d){try{await navigator.clipboard.writeText(d.k);toast('Key copied')}catch{prompt('Copy key:',d.k)}},
  tab(d){S.tab=d.t;R()},reload(){R()},theme(){setTheme(document.documentElement.dataset.theme=='dark'?'light':'dark')},
  reveal(d,el){S.rev.add(d.id);el.closest('.cwb').classList.add('open')},
@@ -380,13 +381,74 @@ function editModal(id,E){const p=S.posts[id],m=p.meta||{};E=E||{body:p.body||'',
  $('#eps').onclick=async()=>{grab();const body=E.body.trim();if(!body&&!E.scene)return toast('Nothing to post');const meta={...(p.meta||{})};delete meta.mood;delete meta.moods;delete meta.cw;delete meta.link;
   if(E.moods.length){meta.moods=E.moods;meta.mood=E.moods[0]}if(E.cw.trim())meta.cw=E.cw.trim().slice(0,60);if(E.lk.trim()){if(!/^https?:\/\//i.test(E.lk.trim()))return toast('Link must start with https://');meta.link=E.lk.trim()}
   const tags=tagsOf(body),{error}=await sb.from('posts').update({body,tags,scene:E.scene,meta}).eq('id',id);if(error)return toast(error.message);Object.assign(p,{body,tags,scene:E.scene,meta});closeSheet();redraw(id);toast('Updated')}}
+
+/* ---------- REALS: full-screen post feed, learns locally from watch time + reactions (no extra DB load) ---------- */
+let reRaw=null,RL=null;
+const dayKey=()=>new Date().toLocaleDateString('en-CA');
+let AF={a:{},t:{},m:{},c:{},d:''};try{Object.assign(AF,JSON.parse(localStorage.rtaf||'{}'))}catch{}
+let RD={d:'',ids:[]};try{RD=JSON.parse(localStorage.rtrd||'{}')||{}}catch{}
+if(RD.d!==dayKey()||!Array.isArray(RD.ids))RD={d:dayKey(),ids:[]};
+if(AF.d!==dayKey()){['a','t','m','c'].forEach(k=>{AF[k]=AF[k]||{};for(const x in AF[k]){AF[k][x]*=.92;if(Math.abs(AF[k][x])<.05)delete AF[k][x]}});AF.d=dayKey()}
+const saveAF=()=>{for(const k of['a','t','m','c']){const e=Object.entries(AF[k]);if(e.length>150){e.sort((x,y)=>Math.abs(y[1])-Math.abs(x[1]));AF[k]=Object.fromEntries(e.slice(0,100))}}try{localStorage.rtaf=JSON.stringify(AF);localStorage.rtrd=JSON.stringify(RD)}catch{}};
+const bump=(o,k,w)=>{if(k==null)return;o[k]=Math.max(-12,Math.min(12,(o[k]||0)+w))};
+const learn=(p,w)=>{bump(AF.a,p.user_id,w);(p.tags||[]).slice(0,5).forEach(t=>bump(AF.t,t,w*.6));moodsOf(p.meta||{}).forEach(k=>bump(AF.m,k,w*.5));bump(AF.c,p.community_id,w*.5)};
+const kindOf=p=>p.scene?'s':p.poll?'p':(p.images||[]).length?'i':'t';
+function rlScore(p){const age=(Date.now()-new Date(p.created_at))/36e5,m=p.meta||{};
+ const aff=(AF.a[p.user_id]||0)+(p.tags||[]).slice(0,5).reduce((x,t)=>x+(AF.t[t]||0)*.6,0)+moodsOf(m).reduce((x,k)=>x+(AF.m[k]||0)*.5,0)+(AF.c[p.community_id]||0)*.5;
+ let s=Math.exp(1.3*Math.tanh(aff/6))/Math.pow(age/24+1,.7)*(1+.2*Math.log(1+Math.max(0,p.ups-p.downs)+p.comments_count*1.5));
+ const v=S.mv[p.id]||0,st=S.st[p.id]||0;if(v==1)s*=.5;if(v==-1)s*=.05;if(st)s*=.8;if(SEEN[p.id])s*=.6;else if(new Date(p.created_at)>LV)s*=1.2;
+ if(S.fol.has(p.user_id))s*=1.3;if(S.joined.has(p.community_id))s*=1.15;
+ const L=RL.last;if(L.slice(-3).some(x=>x.u==p.user_id))s*=.4;if(L.length>1&&L.slice(-2).every(x=>x.k==kindOf(p)))s*=.8;return s}
+function rlNext(){const P=RL.pool;if(!P.length)return null;let bi=0;
+ if(Math.random()<.08){const top=P.map(p=>[p,rlScore(p)]).sort((a,b)=>b[1]-a[1]).slice(0,15);bi=P.indexOf(top[Math.random()*top.length|0][0])}
+ else{let b=-1;P.forEach((p,i)=>{const x=rlScore(p)*Math.exp((Math.random()-.5)*.9);if(x>b){b=x;bi=i}})}
+ const p=P.splice(bi,1)[0];RL.last.push({u:p.user_id,k:kindOf(p)});return p}
+const rlAcc=p=>{const a=(p.author||{}).accent;return hexOk(a)?a:'#ff8a1f'};
+function rlInner(p){const a=p.author||{},m=p.meta||{},mo=moodsOf(m),len=(p.body||'').length,fs=len<60?30:len<160?23:len<400?18:15,pl=S.pv[p.id]||{c:[],me:null},v=S.mv[p.id]||0,sl=S.st[p.id]||0,hid=m.cw&&!S.rev.has(p.id);
+ let poll='';if(p.poll){const tot=pl.c.reduce((x,y)=>x+(y||0),0);poll='<div class="rl-poll">'+p.poll.opts.map((o,i)=>{const pc=tot?Math.round((pl.c[i]||0)/tot*100):0;return `<button class="rl-opt ${pl.me===i?'me':''}" data-act="pvote" data-id="${p.id}" data-i="${i}">${pl.me!=null?`<i style="width:${pc}%"></i>`:''}<span>${esc(o)}${pl.me!=null?` · ${pc}%`:''}</span></button>`}).join('')+'</div>'}
+ const inner=(p.scene?`<img class="rl-sc" alt="" src="${uri(p.scene)}">`:'')+((p.images||[]).length?`<img class="rl-im" alt="" loading="lazy" src="${esc(p.images[0])}">`:'')+(p.body?`<div class="rl-b" style="font-size:${fs}px">${fmt(p.body)}</div>`:'')+(m.link?linkChip(m.link):'')+poll;
+ return `${p.scene?`<img class="rl-blur" alt="" src="${uri(p.scene)}">`:''}<div class="rl-bg"></div><div class="rl-c">${hid?`<button class="rl-cw" data-act="rrev" data-id="${p.id}">${ic('warn',38)}<b>${esc(m.cw)}</b><u>Tap to show</u></button>`:inner}</div>
+ <div class="rl-info"><div class="rl-au"><a href="#/u/${esc(a.username)}">${av(a)}</a><div><b>${esc(a.display_name||a.username)}</b><span>@${esc(a.username)} · ${ago(p.created_at)}</span></div>${S.fol.has(p.user_id)?'':`<button class="rl-fo" data-act="rfol" data-id="${p.user_id}" data-pid="${p.id}">Follow</button>`}</div><div class="rl-m">${mo.map(k=>`<span class="mood">${ic(MOODS[k][1],15)} ${MOODS[k][0]}</span>`).join('')}${p.community?`<a href="#/c/${esc(p.community.slug)}">${ic('people',14)} ${esc(p.community.name)}</a>`:''}</div></div>
+ <div class="rl-act"><button class="${v==1?'on':''}" data-act="rhype" data-id="${p.id}" aria-label="Hype">${ic('up',36)}<small>${p.ups}</small></button><button class="starb ${sl?'on':''} ${sl==2?'sup':''}" data-star="${p.id}" aria-label="Star (hold for super star)">${ic(sl==2?'sstar':sl?'star':'starO',36)}<small>${sl==2?'Super':sl?'Starred':'Star'}</small></button><button data-act="cm" data-id="${p.id}" aria-label="Comments">${ic('chat',36)}<small>${p.comments_count}</small></button><button class="${S.bm.has(p.id)?'on':''}" data-act="bm" data-id="${p.id}" aria-label="Save">${ic('bookmark',36)}<small>Save</small></button><button data-act="votemenu" data-id="${p.id}" aria-label="Hype or disparage">${ic('vote',36)}<small>${p.ups-p.downs}</small></button></div><div class="rl-heart">${ic('up',110)}</div>`}
+const rlEnd=()=>`<div class="rl-bg"></div><div class="rl-c rl-e">${ic('leaf',72)}<h2>No more today</h2><p>You've watched ${RD.ids.length} Reals today. Fresh ones will be waiting tomorrow.</p><a class="btn" href="#/">${ic('home',18)} Back home</a><a class="btn ghost" href="#/c">${ic('people',18)} Explore communities</a></div>`;
+function rlFill(){let ahead=RL.slides.length-1-RL.idx;while(ahead<3&&!RL.end){const p=rlNext();const el=document.createElement('section');if(p){el.className='rl-s';el.dataset.rid=p.id;el.style.setProperty('--rc',rlAcc(p));el.innerHTML=rlInner(p)}else{RL.end=1;el.className='rl-s rl-end';el.innerHTML=rlEnd()}RL.sc.append(el);RL.slides.push(el);RL.io.observe(el);ahead++}}
+function rlLeave(){if(!RL||RL.id==null)return;const id=RL.id,p=S.posts[id],e=RL.entry;RL.id=null;if(!p)return;
+ const dwell=(RL.acc+(RL.t0?performance.now()-RL.t0:0))/1000,exp=Math.max(3,Math.min(14,2+(p.body||'').length/18+(p.scene?3:0)+(p.poll?4:0))),ratio=dwell/exp;
+ let w=ratio<.25&&dwell<1.5?-1.5:Math.min(2.2,ratio)-.3;
+ const v=S.mv[id]||0,st=S.st[id]||0;if(v==1&&e.v!=1)w+=3;if(v!=1&&e.v==1)w-=3;if(v==-1&&e.v!=-1)w-=5;
+ if(st>e.st)w+=(st==2?6:4)-(e.st==1?4:0);if(st<e.st)w-=(e.st==2?6:4)-(st==1?4:0);
+ if(S.bm.has(id)!=e.bm)w+=e.bm?-3:3;if(S.fol.has(p.user_id)&&!e.fol)w+=4;if(RL.cm.has(id))w+=2;
+ learn(p,w);saveAF()}
+function rlEnter(el){const id=el.dataset.rid;RL.t0=performance.now();RL.acc=0;if(!id){RL.id=null;return}const p=S.posts[id];RL.id=id;RL.cm.delete(id);RL.entry={v:S.mv[id]||0,st:S.st[id]||0,bm:S.bm.has(id),fol:S.fol.has(p.user_id)};
+ if(!RD.ids.includes(id)){RD.ids.push(id);saveAF()}const n=$('#rln');if(n)n.textContent=RD.ids.length+' today'}
+function realsStop(){if(!RL)return;rlLeave();RL.io.disconnect();RL.off.forEach(f=>f());reRaw=null;RL=null;saveAF()}
+async function realsPg(){A.innerHTML='<div class="load">Loading Reals…</div>';
+ const since=new Date(Date.now()-14*864e5).toISOString(),ps=await loadPosts(q=>q.gte('created_at',since).limit(150));
+ A.innerHTML=`<div class="rl-wrap"><div class="rl-frame"><div class="rl-top"><a href="#/" class="rl-x" aria-label="Close">${ic('x',22)}</a><b>${ic('reals',24)} Reals</b><span id="rln" class="rl-n">${RD.ids.length} today</span></div><div class="rl-scroll" id="rls"></div><div class="rl-hint" id="rlh">${ic('caret',18)}<span>Swipe up</span></div></div><div class="rl-nv"><button type="button" id="rlu" aria-label="Previous">${ic('caret',22)}</button><button type="button" id="rld" aria-label="Next">${ic('caret',22)}</button></div></div>`;
+ const sc=$('#rls');RL={sc,slides:[],idx:0,end:0,cur:null,id:null,t0:0,acc:0,entry:{},cm:new Set(),last:[],off:[],pool:ps.filter(p=>p.user_id!==me.id&&!RD.ids.includes(p.id))};
+ RL.io=new IntersectionObserver(es=>es.forEach(e=>{if(!e.isIntersecting||e.target===RL.cur)return;rlLeave();RL.cur=e.target;RL.idx=RL.slides.indexOf(e.target);rlEnter(e.target);if(RL.idx>0){const h=$('#rlh');h&&h.remove()}rlFill()}),{root:sc,threshold:.6});
+ reRaw=id=>{const el=RL&&RL.slides.find(x=>x.dataset.rid==id);if(el&&S.posts[id])el.innerHTML=rlInner(S.posts[id])};
+ const go=d=>{const i=Math.max(0,Math.min(RL.slides.length-1,RL.idx+d));sc.scrollTo({top:i*sc.clientHeight,behavior:'smooth'})};
+ const heart=el=>{const h=el&&el.querySelector('.rl-heart');if(!h)return;h.classList.remove('go');void h.offsetWidth;h.classList.add('go')};
+ const like=el=>{const id=el&&el.dataset.rid;if(!id)return;heart(el);if((S.mv[id]||0)!=1)acts.vote({id,v:1})};
+ let lt=0,lx=0,ly=0;const tap=e=>{if(e.target.closest('button,a,input,.rl-poll,.rl-b'))return;const el=e.target.closest('.rl-s');if(!el||!el.dataset.rid)return;const n=Date.now();if(n-lt<320&&Math.abs(e.clientX-lx)<40&&Math.abs(e.clientY-ly)<40){lt=0;like(el)}else{lt=n;lx=e.clientX;ly=e.clientY}};
+ let wl=0;const wheel=e=>{if(!matchMedia('(pointer:fine)').matches)return;const b=e.target.closest('.rl-b');if(b&&b.scrollHeight>b.clientHeight+2)return;e.preventDefault();const n=Date.now();if(n-wl<650||Math.abs(e.deltaY)<8)return;wl=n;go(e.deltaY>0?1:-1)};
+ const key=e=>{if(/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key;if(k=='Escape'){document.querySelector('.bd')?closeSheet():location.hash='#/';return}if(document.querySelector('.bd'))return;const id=RL.cur&&RL.cur.dataset.rid;
+  if(['ArrowDown','j','PageDown',' '].includes(k)){e.preventDefault();go(1)}else if(['ArrowUp','k','PageUp'].includes(k)){e.preventDefault();go(-1)}else if(id){if(k=='l')like(RL.cur);else if(k=='s')starTap(id);else if(k=='c')acts.cm({id});else if(k=='b')acts.bm({id})}};
+ const vis=()=>{if(document.hidden){if(RL.t0){RL.acc+=performance.now()-RL.t0;RL.t0=0}}else if(RL.id!=null)RL.t0=performance.now()};
+ sc.addEventListener('pointerup',tap);sc.addEventListener('wheel',wheel,{passive:false});document.addEventListener('keydown',key);document.addEventListener('visibilitychange',vis);addEventListener('pagehide',saveAF);
+ RL.off=[()=>document.removeEventListener('keydown',key),()=>document.removeEventListener('visibilitychange',vis),()=>removeEventListener('pagehide',saveAF)];
+ $('#rlu').onclick=()=>go(-1);$('#rld').onclick=()=>go(1);rlFill()}
+Object.assign(acts,{rrev(d){S.rev.add(d.id);reRaw&&reRaw(d.id)},rhype(d){acts.vote({id:d.id,v:1})},
+ async rfol(d){const {error}=await sb.from('follows').insert({follower:me.id,following:d.id});if(error)return toast(error.message);S.fol.add(d.id);snack('Following','follow');reRaw&&reRaw(d.pid)}});
+const _cm=acts.cm;acts.cm=(d,e)=>{RL&&RL.cm.add(d.id);return _cm(d,e)};
 async function upd(o){const {data,error}=await sb.from('profiles').update(o).eq('id',me.id).select().single();if(error)return toast(error.message);mp=data;R();toast('Saved')}
 document.addEventListener('click',e=>{const a=e.target.closest('[data-act]');if(a&&acts[a.dataset.act]){e.preventDefault();acts[a.dataset.act](a.dataset,a)}});
 
 /* ---------- ROUTER / BOOT ---------- */
 const NAV=[['','home'],['c','people'],['new','plus','plus'],['saved','bookmark'],['u','user']];
-async function R(){closeSheet(true);const [,a,b]=location.hash.split('/');document.querySelectorAll('#nav a').forEach((x,i)=>x.classList.toggle('on',NAV[i][0]==(a||'')||(a=='u'&&i==4&&(!b||b==mp.username))));
- A.innerHTML='<div class="load">Loading…</div>';const P={'':feed,new:compose,c:comm,u:profile,tag:tagPg,p:postPg,saved,admin,set:settings,stars:starsPg,s:searchPg};try{await(P[a]||feed)(b?decodeURIComponent(b):b);scrollTo(0,0);observe()}catch(e){console.error(e);A.innerHTML='<p class="empty">Something went wrong. Check your Supabase setup.</p>'}}
+async function R(){closeSheet(true);realsStop();const [,a,b]=location.hash.split('/');document.querySelectorAll('#nav a').forEach((x,i)=>x.classList.toggle('on',NAV[i][0]==(a||'')||(a=='u'&&i==4&&(!b||b==mp.username))));
+ A.innerHTML='<div class="load">Loading…</div>';const P={'':feed,new:compose,c:comm,u:profile,tag:tagPg,p:postPg,saved,admin,set:settings,reals:realsPg,stars:starsPg,s:searchPg};try{await(P[a]||feed)(b?decodeURIComponent(b):b);scrollTo(0,0);observe()}catch(e){console.error(e);A.innerHTML='<p class="empty">Something went wrong. Check your Supabase setup.</p>'}}
 async function start(u){me=u;mp=(await sb.from('profiles').select('*').eq('id',u.id).maybeSingle()).data;if(!mp){const r=await sb.rpc('ensure_profile');if(r.error){console.error(r.error);return toast("Couldn't create your profile: "+r.error.message)}mp=r.data}if(!mp)return toast('Profile not found — run fix_profiles.sql in Supabase');
  const [f,j]=await Promise.all([sb.from('follows').select('following').eq('follower',u.id),sb.from('community_members').select('community_id').eq('user_id',u.id)]);S.fol=new Set((f.data||[]).map(x=>x.following));S.joined=new Set((j.data||[]).map(x=>x.community_id));
  document.body.classList.add('in');$('#top').innerHTML=`<a href="#/" class="brand">${LOGO}<b>ReitTime</b></a><button type="button" class="lnk" data-act="srch" aria-label="Search">${ic('search',24)}</button><button class="lnk meb" data-act="menu" aria-label="Menu">${av(mp)}${ic('caret',18)}</button>`;$('#nav').innerHTML=NAV.map(n=>`<a href="#/${n[0]}" class="${n[2]||''}" aria-label="${n[1]}">${ic(n[1],n[2]?28:26)}</a>`).join('');
