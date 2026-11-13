@@ -57,10 +57,13 @@ happy:face(O)+cc(8.500,10,1.4,W)+cc(15.500,10,1.4,W)+kk('M7.500 14.500q4.500 5 9
 calm:face(G)+kk('M6.500 10.500q1.500-1.500 3 0M14.500 10.500q1.500-1.500 3 0',W,1.800)+kk('M8.500 15.500h7',W,2),
 sad:face('#5fa8a0')+cc(8.500,10,1.4,W)+cc(15.500,10,1.4,W)+kk('M8 17q4-4 8 0',W,2),
 ghost:pp('M12 2a7.500 7.500 0 0 0-7.500 7.500V21l2.500-2 2.500 2 2.500-2 2.500 2 2.500-2 2.500 2V9.500A7.500 7.500 0 0 0 12 2z',W,`stroke="${G}" stroke-width="1.600"`)+cc(9.200,10,1.500,'#111')+cc(14.800,10,1.500,'#111')+cc(12,14,1.500,O),
+out:kk('M9 4H5v16h4',G,2.4)+kk('M16 8l4 4-4 4M20 12H10',O,2.6),
+caret:kk('M6 9l6 6 6-6',O,3.2),
 silly:face(O)+cc(8.500,9.500,1.4,W)+cc(15.500,9.500,1.4,W)+kk('M7.500 14q4.500 3 9 0',W,2)+pp('M10.500 15.500h3v3.200a1.500 1.500 0 0 1-3 0z','#ff5a7a')
 };
 const ic=(n,s=20,c='')=>`<svg class="ic ${c}" viewBox="0 0 24 24" width="${s}" height="${s}" aria-hidden="true">${I[n]||''}</svg>`;
 const MOODS={happy:['Happy','happy'],calm:['Calm','calm'],hype:['Hyped','flame'],sad:['Down','sad'],spooky:['Spooky','ghost'],silly:['Silly','silly']};
+const SEX={male:'Male',female:'Female'};
 const BADGES={star:'Star',leaf:'Leaf',flame:'Flame',bolt:'Bolt',heart:'Heart',cube:'Cube',globe:'Globe'};
 const LOGO='<svg viewBox="0 0 64 64"><defs><linearGradient id="l" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8a1f"/><stop offset="1" stop-color="#2fd07a"/></linearGradient></defs><rect x="12" y="6" width="36" height="52" rx="10" fill="url(#l)"/><circle cx="30" cy="33" r="14" fill="#fff"/><circle cx="25.5" cy="30" r="1.9" fill="#111"/><circle cx="34.5" cy="30" r="1.9" fill="#111"/><path d="M24.5 37Q30 43 35.5 37Z" fill="#e8590c"/><path d="M42 6h14a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4h-4l-5 5v-5h-5a4 4 0 0 1-4-4v-8a4 4 0 0 1 4-4z" fill="#1fb868" stroke="#fff" stroke-width="1.5"/></svg>';
 /* theme */
@@ -140,8 +143,8 @@ function editScene(init,cb){const s={...DEF,...init};
  const draw=()=>$('#pv').innerHTML=scn(s);
  el.oninput=e=>{if(!e.target.name)return;const v=e.target.value;s[e.target.name]=isNaN(v)||v===''?v:+v;draw()};
  el.addEventListener('click',e=>{const t=e.target.closest('.tb');if(t){el.querySelectorAll('.tb').forEach(b=>b.classList.toggle('sel',b==t));el.querySelectorAll('.tp').forEach(p=>p.hidden=p.dataset.t!=t.dataset.t)}
-  if(e.target.closest('#rl')){s.sd=Math.random()*1e6|0;s.st=1;draw();el.querySelector('[name=st]').value=1}
-  if(e.target.closest('#rd')){const R=n=>Math.random()*n|0;Object.assign(s,{h:R(360),sat:25+R(60),lit:40+R(40),shape:R(5),eyes:1+R(5),es:6+R(10),et:R(6),nose:R(4),mouth:R(7),extra:R(10),acc:R(8),fit:R(5),oh:R(360),pose:R(7),prop:R(7),sd:R(1e6),pc:'#'+(R(0xaaaaaa)+0x111111).toString(16).padStart(6,'0')});draw();el.querySelectorAll('[name]').forEach(i=>{if(s[i.name]!==undefined)i.value=s[i.name]})}});
+  if(e.target.closest('#rl')){s.sd=Math.random()*1e6|0;s.st=1;draw();const q=el.querySelector('[name=st]');q.value=1;q._sync&&q._sync()}
+  if(e.target.closest('#rd')){const R=n=>Math.random()*n|0;Object.assign(s,{h:R(360),sat:25+R(60),lit:40+R(40),shape:R(5),eyes:1+R(5),es:6+R(10),et:R(6),nose:R(4),mouth:R(7),extra:R(10),acc:R(8),fit:R(5),oh:R(360),pose:R(7),prop:R(7),sd:R(1e6),pc:'#'+(R(0xaaaaaa)+0x111111).toString(16).padStart(6,'0')});draw();el.querySelectorAll('[name]').forEach(i=>{if(s[i.name]!==undefined){i.value=s[i.name];i._sync&&i._sync();i.type=='range'&&setP(i)}})}});
  $('#sv').onclick=()=>{closeSheet();cb(s)}}
 /* ---------- sheets ---------- */
 function sheet(html){closeSheet(true);const el=document.createElement('div');el.className='bd';el.innerHTML=`<div class="sh"><div class="hd"></div><div class="shc">${html}</div></div>`;document.body.append(el);requestAnimationFrame(()=>el.classList.add('on'));
@@ -201,7 +204,7 @@ function drawC(){const c=S.c;$('#cx').innerHTML=`<div class="chips">${Object.ent
  $('#cpoll').innerHTML=c.poll?'<div class="col">'+[0,1,2,3].map(i=>`<input class="po" placeholder="Option ${i+1}${i>1?' (optional)':''}" maxlength="60">`).join('')+'</div>':''}
 async function profile(un){un=un||mp.username;const {data:u}=await sb.from('profiles').select('*').eq('username',un).single();if(!u)return A.innerHTML='<p class="empty">User not found</p>';
  const [fo,fg]=await Promise.all([sb.from('follows').select('*',{count:'exact',head:true}).eq('following',u.id),sb.from('follows').select('*',{count:'exact',head:true}).eq('follower',u.id)]);const ps=await loadPosts(q=>q.eq('user_id',u.id)),mine=u.id===me.id,ac=hexOk(u.accent)?u.accent:'#ff8a1f',pr=(u.scene&&u.scene.p)||{},ac2=hexOk(pr.ac2)?pr.ac2:'#2fd07a',f=S.fol.has(u.id),mo=MOODS[pr.mood];S.prof=u;
- A.innerHTML=`<div class="prof card" style="padding:0;overflow:hidden;--ac:${ac};--ac2:${ac2}">${scn(u.scene,'ban')}<div class="pbar"></div><div class="pi">${av(u,'lg')}<div><h2 style="color:${ac}">${esc(u.display_name||u.username)}${badge(u)} ${u.is_admin?`<span class="badge">${ic('shield',14)} admin</span>`:''}</h2><span class="mu">@${esc(u.username)}${pr.pr?' · '+esc(pr.pr):''}</span></div></div>
+ A.innerHTML=`<div class="prof card" style="padding:0;overflow:hidden;--ac:${ac};--ac2:${ac2}">${scn(u.scene,'ban')}<div class="pbar"></div><div class="pi">${av(u,'lg')}<div><h2 style="color:${ac}">${esc(u.display_name||u.username)}${badge(u)} ${u.is_admin?`<span class="badge">${ic('shield',14)} admin</span>`:''}</h2><span class="mu">@${esc(u.username)}${SEX[pr.sx]?' · '+SEX[pr.sx]:''}</span></div></div>
  ${pr.st||mo?`<div class="status">${mo?ic(mo[1],18):''} ${esc(pr.st||mo[0])}</div>`:''}<p>${fmt(u.bio)}</p>
  <div class="meta2">${pr.loc?`<span>${ic('pin',16)} ${esc(pr.loc)}</span>`:''}${pr.ln?linkChip(pr.ln):''}${u.created_at?`<span>${ic('cal',16)} Joined ${new Date(u.created_at).toLocaleDateString(undefined,{month:'short',year:'numeric'})}</span>`:''}</div>
  <div class="stats"><div>${ic('chat',20)}<b>${ps.length}</b><span>posts</span></div><button class="lnk" data-act="ulist" data-k="followers" data-id="${u.id}">${ic('people',20)}<b>${fo.count||0}</b><span>followers</span></button><button class="lnk" data-act="ulist" data-k="following" data-id="${u.id}">${ic('follow',20)}<b>${fg.count||0}</b><span>following</span></button></div>
@@ -221,6 +224,7 @@ async function settings(){const {data}=await sb.auth.mfa.listFactors();const f=d
 /* ---------- ACTIONS ---------- */
 const adj=(p,v,d)=>v==1?p.ups+=d:p.downs+=d,redraw=id=>{const el=document.querySelector(`[data-card="${id}"]`);if(el)el.outerHTML=postCard(S.posts[id])};
 const acts={
+ menu(d,btn){if(popEl&&popEl._b===btn)return closePop();const items=[{t:'My profile',ic:'user',h:'#/u'},{t:'Saved & drafts',ic:'bookmark',h:'#/saved'},{t:'Settings',ic:'gear',h:'#/set'},{t:'Switch theme',ic:'theme',f:'theme'},...(isAdm()?[{t:'Admin reports',ic:'shield',h:'#/admin'}]:[]),{t:'Log out',ic:'out',f:'out'}];popup(btn,items,it=>it.h?location.hash=it.h:acts[it.f]({}),'menu');popEl._b=btn},
  tab(d){S.tab=d.t;R()},reload(){R()},theme(){setTheme(document.documentElement.dataset.theme=='dark'?'light':'dark')},
  reveal(d,el){S.rev.add(d.id);el.closest('.cwb').classList.add('open')},
  mood(d){S.c.mood=S.c.mood==d.k?null:d.k;drawC()},cwt(){S.c.cw=!S.c.cw;drawC()},cln(){S.c.ln=!S.c.ln;drawC()},
@@ -247,13 +251,13 @@ const acts={
  async feat(d){await sb.from('communities').update({featured:d.f!='true'}).eq('id',d.id);R()},
  async delc2(d){if(!confirm('Delete community?'))return;await sb.from('communities').delete().eq('id',d.id);location.hash='#/c'},
  editp(){const p=(mp.scene&&mp.scene.p)||{};let sc=mp.scene;
-  sheet(`<h3>${ic('pen',22)} Edit profile</h3><input id="ed" value="${esc(mp.display_name)}" placeholder="Display name" maxlength="40"><input id="ep" value="${esc(p.pr)}" placeholder="Pronouns (optional)" maxlength="20"><input id="est" value="${esc(p.st)}" placeholder="Status — what are you up to?" maxlength="60"><div class="chips" id="emo">${Object.entries(MOODS).map(([k,m])=>`<button type="button" class="chip ${p.mood==k?'sel':''}" data-k="${k}">${ic(m[1],18)} ${m[0]}</button>`).join('')}</div><input id="el" value="${esc(p.loc)}" placeholder="Location" maxlength="40"><input id="ek" type="url" value="${esc(p.ln)}" placeholder="Website https://…" maxlength="200"><textarea id="eb" maxlength="200" placeholder="Bio">${esc(mp.bio)}</textarea>
+  sheet(`<h3>${ic('pen',22)} Edit profile</h3><input id="ed" value="${esc(mp.display_name)}" placeholder="Display name" maxlength="40"><label class="ctl">Sex<select id="esx"><option value="">Unspecified</option><option value="male" ${p.sx=='male'?'selected':''}>Male</option><option value="female" ${p.sx=='female'?'selected':''}>Female</option></select></label><input id="est" value="${esc(p.st)}" placeholder="Status — what are you up to?" maxlength="60"><div class="chips" id="emo">${Object.entries(MOODS).map(([k,m])=>`<button type="button" class="chip ${p.mood==k?'sel':''}" data-k="${k}">${ic(m[1],18)} ${m[0]}</button>`).join('')}</div><input id="el" value="${esc(p.loc)}" placeholder="Location" maxlength="40"><input id="ek" type="url" value="${esc(p.ln)}" placeholder="Website https://…" maxlength="200"><textarea id="eb" maxlength="200" placeholder="Bio">${esc(mp.bio)}</textarea>
   <div class="row"><label class="ctl" style="flex:1">Accent<input type="color" id="ea" value="${hexOk(mp.accent)?mp.accent:'#ff8a1f'}"></label><label class="ctl" style="flex:1">Second color<input type="color" id="ea2" value="${hexOk(p.ac2)?p.ac2:'#2fd07a'}"></label></div>
   <div class="chips" id="ebd">${Object.entries(BADGES).map(([k,t])=>`<button type="button" class="chip ${p.bd==k?'sel':''}" data-k="${k}" title="${t}">${ic(k,20)}</button>`).join('')}<button type="button" class="chip ${!p.bd?'sel':''}" data-k="">None</button></div>
   <button class="chip" id="es">${ic('face',18)} Edit my character</button><button class="btn" id="eo">Save</button>`);
   let mood=p.mood||'',bd=p.bd||'';const pick=(id,fn)=>$(id).onclick=e=>{const b=e.target.closest('.chip');if(!b)return;$(id).querySelectorAll('.chip').forEach(x=>x.classList.toggle('sel',x==b));fn(b.dataset.k)};
   pick('#emo',k=>mood=mood==k?'':k);pick('#ebd',k=>bd=k);
-  const pack=()=>({...(sc||{}),p:{pr:$('#ep').value,st:$('#est').value,mood,loc:$('#el').value,ln:$('#ek').value,ac2:$('#ea2').value,bd}});
+  const pack=()=>({...(sc||{}),p:{sx:$('#esx').value,st:$('#est').value,mood,loc:$('#el').value,ln:$('#ek').value,ac2:$('#ea2').value,bd}});
   $('#es').onclick=()=>{const keep=pack();editScene(keep,async s=>{await upd({scene:s})})};
   $('#eo').onclick=async()=>{await upd({display_name:$('#ed').value,bio:$('#eb').value,accent:$('#ea').value,scene:pack()});closeSheet()}},
  cscene(){S.c.body=$('#cb').value;editScene(S.c.scene||noP(mp.scene),s=>{S.c.scene=noP(s);R()})},rmscene(){S.c.scene=null;drawC()},cpoll(){S.c.poll=!S.c.poll;drawC()},
@@ -278,8 +282,24 @@ async function R(){closeSheet(true);const [,a,b]=location.hash.split('/');docume
  A.innerHTML='<div class="load">Loading…</div>';const P={'':feed,new:compose,c:comm,u:profile,tag:tagPg,p:postPg,saved,admin,set:settings};try{await(P[a]||feed)(b?decodeURIComponent(b):b);scrollTo(0,0)}catch(e){console.error(e);A.innerHTML='<p class="empty">Something went wrong. Check your Supabase setup.</p>'}}
 async function start(u){me=u;mp=(await sb.from('profiles').select('*').eq('id',u.id).maybeSingle()).data;if(!mp){const r=await sb.rpc('ensure_profile');if(r.error){console.error(r.error);return toast("Couldn't create your profile: "+r.error.message)}mp=r.data}if(!mp)return toast('Profile not found — run fix_profiles.sql in Supabase');
  const [f,j]=await Promise.all([sb.from('follows').select('following').eq('follower',u.id),sb.from('community_members').select('community_id').eq('user_id',u.id)]);S.fol=new Set((f.data||[]).map(x=>x.following));S.joined=new Set((j.data||[]).map(x=>x.community_id));
- document.body.classList.add('in');$('#top').innerHTML=`<a href="#/" class="brand">${LOGO}<b>ReitTime</b></a><span class="sp"></span>${isAdm()?`<a href="#/admin" aria-label="Admin">${ic('shield',24)}</a>`:''}<button class="lnk" data-act="theme" aria-label="Toggle theme">${ic('theme',24)}</button><a href="#/set" aria-label="Settings">${ic('gear',24)}</a>`;$('#nav').innerHTML=NAV.map(n=>`<a href="#/${n[0]}" class="${n[2]||''}" aria-label="${n[1]}">${ic(n[1],n[2]?28:26)}</a>`).join('');
+ document.body.classList.add('in');$('#top').innerHTML=`<a href="#/" class="brand">${LOGO}<b>ReitTime</b></a><button class="lnk meb" data-act="menu" aria-label="Menu">${av(mp)}${ic('caret',18)}</button>`;$('#nav').innerHTML=NAV.map(n=>`<a href="#/${n[0]}" class="${n[2]||''}" aria-label="${n[1]}">${ic(n[1],n[2]?28:26)}</a>`).join('');
  sb.channel('posts').on('postgres_changes',{event:'INSERT',schema:'public',table:'posts'},pl=>{const n=$('#newp');if(n&&pl.new.user_id!==me.id)n.innerHTML=`<button class="pill" data-act="reload">${ic('arrowup',16)} New posts</button>`}).subscribe();
  if(!S.started){S.started=1;addEventListener('hashchange',R)}R()}
 async function boot(){const {data:{session}}=await sb.auth.getSession();if(!session)return authUI();const {data:a}=await sb.auth.mfa.getAuthenticatorAssuranceLevel();if(a&&a.nextLevel==='aal2'&&a.currentLevel!=='aal2')return mfaUI();start(session.user)}
+/* ---------- custom controls: dropdowns, sliders, color boxes, popup menus ---------- */
+let popEl=null;const closePop=()=>{popEl&&popEl.remove();popEl=null};
+function popup(btn,items,onPick,cls=''){closePop();const r=btn.getBoundingClientRect(),el=document.createElement('div');el.className='pop '+cls;
+ el.innerHTML=items.map((it,i)=>`<button type="button" class="ddi ${it.sel?'sel':''}" data-i="${i}">${it.ic?ic(it.ic,20):''}<span>${esc(it.t)}</span>${it.sel?ic('check',16):''}</button>`).join('');
+ document.body.append(el);const h=el.offsetHeight,below=innerHeight-r.bottom,up=below<h+12&&r.top>below;
+ el.style.minWidth=Math.max(r.width,200)+'px';el.style.left=Math.min(Math.max(8,r.left),innerWidth-el.offsetWidth-8)+'px';el.style.maxHeight=Math.max(120,(up?r.top:below)-16)+'px';el.style.top=(up?Math.max(8,r.top-Math.min(h,r.top-16)-6):r.bottom+6)+'px';
+ el.onclick=e=>{const b=e.target.closest('.ddi');if(!b)return;closePop();onPick(items[+b.dataset.i],b)};popEl=el;requestAnimationFrame(()=>el.classList.add('on'))}
+document.addEventListener('click',e=>{if(popEl&&!e.target.closest('.pop,.dd,[data-act=menu]'))closePop()},true);addEventListener('keydown',e=>e.key=='Escape'&&closePop());
+function setP(r){r.style.setProperty('--p',((r.value-r.min)/(r.max-r.min)*100)+'%')}
+document.addEventListener('input',e=>e.target.type=='range'&&setP(e.target));
+function enhSel(s){s.dataset.dd=1;s.hidden=true;const b=document.createElement('button');b.type='button';b.className='dd';s.after(b);
+ const sync=()=>{const o=s.options[s.selectedIndex];b.innerHTML=`<span>${esc(o?o.text:'')}</span>${ic('caret',18)}`};
+ b.onclick=()=>{if(popEl&&popEl._b===b)return closePop();popup(b,[...s.options].map((o,i)=>({t:o.text,sel:i==s.selectedIndex,v:o.value})),it=>{s.value=it.v;sync();s.dispatchEvent(new Event('input',{bubbles:true}));s.dispatchEvent(new Event('change',{bubbles:true}))});popEl._b=b};s._sync=sync;sync()}
+function enhCol(c){c.dataset.cl=1;const row=document.createElement('div');row.className='sw';['#ff8a1f','#e8590c','#ffd24a','#2fd07a','#1fb868','#0f7a43','#3aa0ff','#b36bff','#ff5a7a','#111111','#f3f3f3'].forEach(h=>{const b=document.createElement('button');b.type='button';b.style.background=h;b.setAttribute('aria-label',h);b.onclick=()=>{c.value=h;c.dispatchEvent(new Event('input',{bubbles:true}))};row.append(b)});c.after(row)}
+let enq=0;const enh=()=>{enq=0;document.querySelectorAll('select:not([data-dd]),input[type=range]:not([data-rg]),input[type=color]:not([data-cl])').forEach(x=>x.tagName=='SELECT'?enhSel(x):x.type=='range'?(x.dataset.rg=1,setP(x)):enhCol(x))};
+new MutationObserver(()=>{if(!enq){enq=1;requestAnimationFrame(enh)}}).observe(document.body,{childList:true,subtree:true});
 boot();
