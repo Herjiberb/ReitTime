@@ -138,64 +138,87 @@ const PRE=[
 /* ---------- full composer: two layered tracks, presets, piano keyboard, timeline, per-track tempo / volume / effects ---------- */
 function musicEditor(init,cb){init=init||{};
  const blank=()=>({bpm:100,fx:0,q:0,notes:[]}),cl=x=>x?JSON.parse(JSON.stringify(x)):blank(),T={a:cl(init.a),b:cl(init.b)},H=[];
- let tk='a',sel=-1,cd=5,ci=0,ko=3,mode='step',txt=false,stg=[];const CHQ=[['Maj',[0,4,7]],['min',[0,3,7]],['7',[0,4,7,10]],['maj7',[0,4,7,11]],['min7',[0,3,7,10]],['dim',[0,3,6]],['aug',[0,4,8]],['sus2',[0,2,7]],['sus4',[0,5,7]],['5',[0,7,12]]];
- const cur=()=>T[tk],push=()=>{H.push(JSON.stringify(T));H.length>30&&H.shift()},has=k=>T[k].notes.length>0;
+ let tk='a',sel=-1,cd=5,ci=0,ko=3,quick=false,stg=[];
+ const CHQ=[['Major',[0,4,7]],['Minor',[0,3,7]],['7th',[0,4,7,10]],['Major 7th',[0,4,7,11]],['Minor 7th',[0,3,7,10]],['Diminished',[0,3,6]],['Augmented',[0,4,8]],['Sus 2',[0,2,7]],['Sus 4',[0,5,7]],['Power (5)',[0,7,12]]];
+ const cur=()=>T[tk],push=()=>{H.push(JSON.stringify(T));H.length>30&&H.shift()},has=k=>T[k].notes.length>0,nm=a=>a.length?a.map(mName).join(' '):'rest';
  const el=sheet(`<h3>${ic('note',22)} Composer</h3><p class="mu" id="mif"></p>
- <div class="seg" id="mtk"><button type="button" class="sel" data-tk="a">Track A</button><button type="button" data-tk="b">Track B <small>layer</small></button></div>
- <div class="mpr">${PRE.map((p,i)=>`<button type="button" class="chip sm" data-pr="${i}">${esc(p[0])}</button>`).join('')}</div>
- <div class="mset"><label class="ctl">Tempo <b id="mbv"></b> bpm<input type="range" id="mbp" min="40" max="240" value="100"></label><label class="ctl">Volume <b id="mvv"></b><input type="range" id="mvl" min="0" max="7" value="7"></label></div>
- <div class="seg" id="mfx">${FXN.map((x,k)=>`<button type="button" data-fx="${k}">${x}</button>`).join('')}</div>
- <h4 class="sg">Sound</h4><div class="msn" id="mss"></div><h4 class="sg">Length (beats)</h4><div class="msn" id="mds"></div>
+ <section class="mcard"><div class="seg" id="mtk"><button type="button" class="sel" data-tk="a">Track A</button><button type="button" data-tk="b">Track B <small>layer</small></button></div>
+ <div class="mrow2"><label class="mlb">Preset<select id="mpre"><option value="">Load a preset…</option>${PRE.map((p,i)=>`<option value="${i}">${esc(p[0])}</option>`).join('')}</select></label><label class="mlb">Effect<select id="mfx">${FXN.map((x,k)=>`<option value="${k}">${x}</option>`).join('')}</select></label></div>
+ <div class="mrow2"><label class="mlb">Tempo <b id="mbv"></b> bpm<input type="range" id="mbp" min="40" max="240" value="100"></label><label class="mlb">Volume <b id="mvv"></b><input type="range" id="mvl" min="0" max="7" value="7"></label></div></section>
  <h4 class="sg">Timeline <small class="mu" id="mcn"></small></h4><div class="mtl" id="mtl"></div>
- <div class="row wrap mact"><button type="button" class="chip sm" id="mund">Undo</button><button type="button" class="chip sm" id="mrest">+ Rest</button><button type="button" class="chip sm" id="mdup">Duplicate</button><button type="button" class="chip sm" id="mlf">◀</button><button type="button" class="chip sm" id="mrt">▶</button><button type="button" class="chip sm" id="mdel">${ic('trash',14)} Delete</button><button type="button" class="chip sm" id="mclr">Clear track</button></div>
- <div class="seg" id="mmd"><button type="button" class="sel" data-md="step">Notes</button><button type="button" data-md="stage">New chord</button><button type="button" data-md="chord">Edit tones</button></div><p class="mu" id="mhn"></p>
- <div id="mch" hidden class="col"><div class="msn">${CHQ.map((c,i)=>`<button type="button" class="chip sm" data-cq="${i}">${c[0]}</button>`).join('')}</div><div class="row wrap"><button type="button" class="btn" id="mcadd">Add chord</button><button type="button" class="chip sm" id="mcclr">Clear keys</button></div></div>
- <div class="row wrap"><button type="button" class="chip sm" id="mo1">Octave ▼</button><b id="mov"></b><button type="button" class="chip sm" id="mo2">Octave ▲</button></div><div id="mkb"></div>
- <div class="row wrap"><button type="button" class="chip sm" id="mtg">Text / import</button></div><div id="mtw" hidden><textarea id="mtx" rows="5" spellcheck="false"></textarea><p class="mu">Example: <code class="ic1">bpm=90 fx=2 C4+E4+G4:2@10 R:1 A3:0.5@4</code> — tones joined by +, :beats, @sound 0–15 (${INST.map((x,k)=>k+' '+x).join(', ')}), fx 0–3, q 0–7 (quieter).</p><button type="button" class="chip sm" id="mta">Apply text to this track</button></div>
- <p class="mu" id="mer" style="color:#e5484d"></p>
+ <div class="mtools"><button type="button" class="chip sm" id="mund" title="Undo (Ctrl+Z)">↶ Undo</button><button type="button" class="chip sm" id="mlf" title="Move left">◀</button><button type="button" class="chip sm" id="mrt" title="Move right">▶</button><button type="button" class="chip sm" id="mdup">Duplicate</button><button type="button" class="chip sm" id="mrest">+ Rest</button><button type="button" class="chip sm" id="mdel">${ic('trash',14)}</button><button type="button" class="chip sm" id="mclr">Clear</button></div>
+ <h4 class="sg">Note</h4><p class="mst" id="mst"></p>
+ <div class="mrow2"><label class="mlb">Sound<select id="msel">${INST.map((x,k)=>`<option value="${k}">${x}</option>`).join('')}</select></label><label class="mlb">Length (beats)<select id="mdsl">${DUR.map((x,k)=>`<option value="${k}">${x}</option>`).join('')}</select></label></div>
+ <div class="mrow2"><label class="mlb">Chord shape<select id="mcq"><option value="">Pick a chord…</option>${CHQ.map((c,i)=>`<option value="${i}">${c[0]}</option>`).join('')}</select></label><div class="mlb">Octave<div class="mstep"><button type="button" id="mo1" aria-label="Octave down">−</button><b id="mov"></b><button type="button" id="mo2" aria-label="Octave up">+</button></div></div></div>
+ <div id="mkb"></div>
+ <div class="mrow2 mgo"><button type="button" class="btn" id="mcadd"></button><button type="button" class="chip" id="mcclr">Clear keys</button></div>
+ <label class="msw"><input type="checkbox" id="mquick"><span class="swt"></span><span>Quick add <small class="mu">— every key tap adds its own note</small></span></label>
  <div class="row wrap"><button type="button" class="chip" id="mpa">${ic('mplay',18)} Play this track</button><button type="button" class="chip" id="mps">${ic('mplay',18)} Play layer A</button></div>
+ <details class="mdt"><summary>Text / import</summary><textarea id="mtx" rows="5" spellcheck="false"></textarea><p class="mu">Example: <code class="ic1">bpm=90 fx=2 C4+E4+G4:2@10 R:1 A3:0.5@4</code> — tones joined by +, :beats, @sound 0–15 (${INST.map((x,k)=>k+' '+x).join(', ')}), fx 0–3, q 0–7 (quieter).</p><button type="button" class="chip sm" id="mta">Apply text to this track</button></details>
+ <details class="mdt"><summary>Computer keyboard shortcuts</summary><p class="mu">Piano keys: <b>Z S X D C V G B H N J M</b> (low octave) and <b>Q 2 W 3 E R 5 T 6 Y 7 U</b> (high octave). They toggle tones on the selected note, or on the new note. <b>Enter</b> add / done · <b>← →</b> select note · <b>Delete</b> remove note · <b>[ ]</b> octave · <b>Space</b> play · <b>Ctrl+Z</b> undo.</p></details>
+ <p class="mu" id="mer" style="color:#e5484d"></p>
  <div class="row"><button class="btn" id="mok">Use this music</button><button class="btn ghost" id="mrm">Remove all</button></div>`);
- el.classList.add('mfull');const $$=s=>el.querySelector(s);
- const info=()=>{const d=k=>has(k)?mdur(T[k]).toFixed(1)+'s':'—';$$('#mif').textContent=`Loops forever. Track A ${d('a')} · Track B ${d('b')}${has('a')&&has('b')?' — the shorter track waits for the longer to finish, then both restart.':'. Add a second track to layer sounds (e.g. rain under a melody).'}`};
- const ctl=()=>{const s=cur();if(!MP.cur||MP.cur.enc!=='pv')$$('#mps').innerHTML=ic('mplay',18)+' Play layer '+tk.toUpperCase();$$('#mbp').value=s.bpm;$$('#mbv').textContent=s.bpm;$$('#mvl').value=7-s.q;$$('#mvv').textContent=7-s.q;el.querySelectorAll('#mtk button').forEach(b=>b.classList.toggle('sel',b.dataset.tk==tk));el.querySelectorAll('#mfx button').forEach(b=>b.classList.toggle('sel',+b.dataset.fx==s.fx));$$('#mbp').dispatchEvent(new Event('input',{bubbles:true}));$$('#mvl').dispatchEvent(new Event('input',{bubbles:true}));if(txt)$$('#mtx').value=musTxt(s)};
- const W=[0,2,4,5,7,9,11],dyn=()=>{const s=cur(),n=sel>=0?s.notes[sel]:null,on=new Set(mode=='stage'?stg:n?n.t:[]);let wk='',bk='';
-  $$('#mss').innerHTML=INST.map((x,k)=>`<button type="button" class="chip sm ${(n?n.i:ci)==k?'sel':''}" data-s="${k}">${x}</button>`).join('');
-  $$('#mds').innerHTML=DUR.map((x,k)=>`<button type="button" class="chip sm ${(n?n.d:cd)==k?'sel':''}" data-d="${k}">${x}</button>`).join('');
-  $$('#mtl').innerHTML=s.notes.map((x,i)=>`<button type="button" class="mtb ${i==sel?'sel':''}" data-n="${i}" title="${x.t.length?x.t.map(mName).join(' + '):'rest'}" style="flex:0 0 ${Math.max(58,DUR[x.d]*34)}px"><b>${x.t.length?x.t.slice(0,2).map(mName).join(' ')+(x.t.length>2?' +'+(x.t.length-2):''):'rest'}</b><span class="mtbs">${x.t.map(m=>`<i style="bottom:${(m-24)/84*100}%"></i>`).join('')}</span><small>${INST[x.i]}</small></button>`).join('')||'<span class="mu mtem">Tap piano keys below to add notes</span>';
+ el.classList.add('mfull');const $$=s=>el.querySelector(s),W=[0,2,4,5,7,9,11];
+ const info=()=>{const d=k=>has(k)?mdur(T[k]).toFixed(1)+'s':'—';$$('#mif').textContent=`Loops forever. Track A ${d('a')} · Track B ${d('b')}${has('a')&&has('b')?' — the shorter waits for the longer, then both restart.':'. Add a second track to layer sounds.'}`};
+ const ctl=()=>{const s=cur();$$('#mbp').value=s.bpm;$$('#mbv').textContent=s.bpm;$$('#mvl').value=7-s.q;$$('#mvv').textContent=7-s.q;$$('#mfx').value=s.fx;el.querySelectorAll('#mtk button').forEach(b=>b.classList.toggle('sel',b.dataset.tk==tk));if(!MP.cur||MP.cur.enc!=='pv')$$('#mps').innerHTML=ic('mplay',18)+' Play layer '+tk.toUpperCase();$$('#mtx').value=musTxt(s)};
+ const dyn=()=>{const s=cur(),n=sel>=0?s.notes[sel]:null,on=new Set(n?n.t:stg);let wk='',bk='';
+  $$('#msel').value=n?n.i:ci;$$('#mdsl').value=n?n.d:cd;
+  $$('#mtl').innerHTML=s.notes.map((x,i)=>`<button type="button" class="mtb ${i==sel?'sel':''}" data-n="${i}" title="${nm(x.t)}" style="flex:0 0 ${Math.max(58,DUR[x.d]*34)}px"><b>${x.t.length?x.t.slice(0,2).map(mName).join(' ')+(x.t.length>2?' +'+(x.t.length-2):''):'rest'}</b><span class="mtbs">${x.t.map(m=>`<i style="bottom:${(m-24)/84*100}%"></i>`).join('')}</span><small>${INST[x.i]}</small></button>`).join('')||'<span class="mu mtem">Tap piano keys below, then press Add</span>';
   $$('#mcn').textContent=s.notes.length+'/'+MAXN;
   for(let o=0;o<2;o++)W.forEach((nn,i)=>{const m=(ko+o+1)*12+nn,idx=o*7+i;wk+=`<button type="button" class="kw ${on.has(m)?'on':''}" data-m="${m}"><small>${nn==0?'C'+(ko+o):''}</small></button>`;if([0,2,5,7,9].includes(nn))bk+=`<button type="button" class="kb ${on.has(m+1)?'on':''}" data-m="${m+1}" style="left:${(idx+1)/14*100}%"></button>`});
-  $$('#mkb').innerHTML=`<div class="kbd"><div class="kws">${wk}</div>${bk}</div>`;$$('#mov').textContent='C'+ko+' – B'+(ko+1);
-  $$('#mch').hidden=mode!='stage';$$('#mcadd').textContent='Add chord'+(stg.length?' ('+stg.map(mName).join(' ')+')':'');$$('#mhn').textContent=mode=='stage'?'Tap up to 5 keys (or pick a chord type — it builds from your lowest key, or the first key of the octave), then press Add chord. It is added with the sound and length chosen above.':mode=='step'?'Each key you tap adds a new note after the selected one (using the sound and length above).':sel>=0?'Tap keys to add or remove tones in the selected note (up to 5).':'Select a note in the timeline, then tap keys to build a chord.';
-  el.querySelectorAll('#mmd button').forEach(b=>b.classList.toggle('sel',b.dataset.md==mode));info()};
+  $$('#mkb').innerHTML=`<div class="kbd"><div class="kws">${wk}</div>${bk}</div>`;$$('#mov').textContent='C'+ko+'–B'+(ko+1);
+  $$('#mst').innerHTML=n?`Editing <b>note ${sel+1}</b>: ${nm(n.t)}. Tap keys to add or remove tones — nothing new is added.`:stg.length?`New note: <b>${nm(stg)}</b>. Press Add when ready.`:quick?'Quick add is on: each key tap adds a note.':'Tap keys to build a note or chord, then press Add.';
+  const b=$$('#mcadd');b.textContent=n?'Done editing':stg.length?'Add '+(stg.length>1?'chord':'note'):'Add to timeline';b.disabled=!n&&!stg.length;$$('#mcclr').hidden=!!n;$$('#mquick').checked=quick;
+  ['#mdup','#mdel','#mlf','#mrt'].forEach(q=>$$(q).disabled=!n);info()};
  const stopPv=()=>{$$('#mpa').innerHTML=ic('mplay',18)+' Play this track';$$('#mps').innerHTML=ic('mplay',18)+' Play layer '+tk.toUpperCase()};
  const pv=w=>{if(MP.cur&&MP.cur.enc==='pv'){mstop();stopPv();return}const ss=(w=='both'?['a','b']:[tk]).filter(has).map(k=>musEnc(T[k]));if(!ss.length)return toast('Add a note first');mPlay(ss[0],ss[1],'Composer preview');if(MP.cur)MP.cur.enc='pv';$$(w=='both'?'#mpa':'#mps').innerHTML=ic('mstop',18)+' Stop';const wt=setInterval(()=>{if(!document.body.contains(el)){mstop();clearInterval(wt)}else if(!MP.cur||MP.cur.enc!=='pv'){stopPv();clearInterval(wt)}},400)};
  const ins=n=>{const s=cur();if(s.notes.length>=MAXN)return toast('Max '+MAXN+' notes');push();const at=sel>=0?sel+1:s.notes.length;s.notes.splice(at,0,n);sel=at};
+ const undo=()=>{const x=H.pop();if(x){const o=JSON.parse(x);T.a=o.a;T.b=o.b;sel=-1;ctl();dyn()}};
+ /* piano keys EDIT the selected note (or the new-note draft); they never add a note by themselves unless Quick add is on */
+ const tog=m=>{m=Math.max(24,Math.min(108,m));const s=cur(),n=sel>=0?s.notes[sel]:null;
+  if(!n&&quick){if(s.notes.length>=MAXN)return toast('Max '+MAXN+' notes');push();s.notes.push({t:[m],d:cd,i:ci});mblip(m,ci);dyn();return}
+  const a=n?n.t:stg,k=a.indexOf(m);if(k<0&&a.length>=5)return toast('Max 5 tones');if(n)push();if(k>=0)a.splice(k,1);else{a.push(m);mblip(m,n?n.i:ci)}a.sort((x,y)=>x-y);dyn()};
+ const add=()=>{if(sel>=0){sel=-1;dyn();return}if(!stg.length)return toast('Tap piano keys first');const t=[...stg];ins({t,d:cd,i:ci});sel=-1;stg=[];t.forEach(m=>mblip(m,ci));dyn()};
+ const del=()=>{const s=cur();if(sel>=0){push();s.notes.splice(sel,1);sel=Math.min(sel,s.notes.length-1);dyn()}};
+ const mv=d=>{const s=cur(),j=sel+d;if(sel>=0&&j>=0&&j<s.notes.length){push();[s.notes[sel],s.notes[j]]=[s.notes[j],s.notes[sel]];sel=j;dyn()}};
  el.addEventListener('click',e=>{const t=e.target,s=cur(),n=sel>=0?s.notes[sel]:null,q=x=>t.closest(x);let b;
   if(b=q('[data-tk]')){tk=b.dataset.tk;sel=-1;ctl();dyn();return}
-  if(b=q('[data-pr]')){const p=PRE[+b.dataset.pr];push();const a=musParse(p[1]),c=p[2]&&musParse(p[2]);T.a=a;T.b=c||blank();tk='a';sel=-1;ctl();dyn();toast(p[0]+' loaded'+(c?' (2 layers)':''));return}
-  if(b=q('[data-fx]')){push();s.fx=+b.dataset.fx;ctl();return}
-  if(b=q('[data-s]')){const k=+b.dataset.s;ci=k;if(n){push();n.i=k}dyn();mblip(n&&n.t[0]||60,k);return}
-  if(b=q('[data-d]')){const k=+b.dataset.d;cd=k;if(n){push();n.d=k}dyn();return}
-  if(b=q('[data-n]')){const i=+b.dataset.n;sel=sel==i?-1:i;dyn();if(sel>=0&&s.notes[sel].t.length)mblip(s.notes[sel].t[0],s.notes[sel].i);return}
-  if(mode=='stage'&&(b=q('[data-cq]'))){const rt=stg.length?Math.min(...stg):(ko+1)*12;stg=CHQ[+b.dataset.cq][1].map(x=>rt+x).filter(m=>m<=108);dyn();stg.forEach((m,k)=>setTimeout(()=>mblip(m,ci),k*70));return}
+  if(b=q('[data-n]')){const i=+b.dataset.n;sel=sel==i?-1:i;dyn();if(sel>=0&&s.notes[sel].t.length)s.notes[sel].t.forEach(m=>mblip(m,s.notes[sel].i));return}
+  if(b=q('[data-m]')){tog(+b.dataset.m);return}
+  if(q('#mcadd'))return add();
   if(q('#mcclr')){stg=[];dyn();return}
-  if(q('#mcadd')){if(!stg.length)return toast('Tap some keys first');push();ins({t:[...stg].sort((x,y)=>x-y),d:cd,i:ci});stg.forEach(m=>mblip(m,ci));stg=[];dyn();return}
-  if(mode=='stage'&&(b=q('[data-m]'))){const m=Math.max(24,Math.min(108,+b.dataset.m)),k=stg.indexOf(m);if(k>=0)stg.splice(k,1);else if(stg.length<5)stg.push(m);else toast('Max 5 tones');mblip(m,ci);dyn();return}
-  if(b=q('[data-m]')){const m=Math.max(24,Math.min(108,+b.dataset.m));if(mode=='chord'&&n){push();const k=n.t.indexOf(m);if(k>=0)n.t.splice(k,1);else if(n.t.length<5)n.t.push(m);else toast('Max 5 tones');n.t.sort((x,y)=>x-y);mblip(m,n.i)}else{ins({t:[m],d:cd,i:ci});mblip(m,ci)}dyn();return}
-  if(q('[data-md]')){mode=q('[data-md]').dataset.md;dyn();return}
   if(q('#mo1')){ko=Math.max(1,ko-1);dyn();return}if(q('#mo2')){ko=Math.min(6,ko+1);dyn();return}
-  if(q('#mund')){const x=H.pop();if(x){const o=JSON.parse(x);T.a=o.a;T.b=o.b;sel=-1;ctl();dyn()}return}
-  if(q('#mrest')){ins({t:[],d:cd,i:ci});dyn();return}
+  if(q('#mund'))return undo();
+  if(q('#mrest')){ins({t:[],d:cd,i:ci});sel=-1;dyn();return}
   if(q('#mdup')){if(n){ins(JSON.parse(JSON.stringify(n)));dyn()}return}
-  if(q('#mdel')){if(n){push();s.notes.splice(sel,1);sel=Math.min(sel,s.notes.length-1);dyn()}return}
-  if(q('#mlf')||q('#mrt')){const d=q('#mlf')?-1:1,j=sel+d;if(n&&j>=0&&j<s.notes.length){push();[s.notes[sel],s.notes[j]]=[s.notes[j],s.notes[sel]];sel=j;dyn()}return}
+  if(q('#mdel'))return del();
+  if(q('#mlf'))return mv(-1);if(q('#mrt'))return mv(1);
   if(q('#mclr')){if(s.notes.length&&confirm('Clear all notes on this track?')){push();s.notes=[];sel=-1;dyn()}return}
-  if(q('#mtg')){txt=!txt;$$('#mtw').hidden=!txt;if(txt)$$('#mtx').value=musTxt(s);return}
   if(q('#mta')){const r=musParse($$('#mtx').value);if(r.err){$$('#mer').textContent=r.err;return}$$('#mer').textContent='';push();T[tk]=r;sel=-1;ctl();dyn();return}
   if(q('#mpa'))return pv('both');if(q('#mps'))return pv('one');
   if(q('#mok')){let a=has('a')?musEnc(T.a):null,c=has('b')?musEnc(T.b):null;if(!a){a=c;c=null}if(!a)return toast('Add a note first');mstop();closeSheet();cb({a,b:c});return}
   if(q('#mrm')){mstop();closeSheet();cb({a:null,b:null})}});
+ el.addEventListener('change',e=>{const id=e.target.id,v=e.target.value,s=cur(),n=sel>=0?s.notes[sel]:null;
+  if(id=='mpre'){e.target.value='';if(v==='')return;const p=PRE[+v];push();T.a=musParse(p[1]);T.b=p[2]?musParse(p[2]):blank();tk='a';sel=-1;stg=[];ctl();dyn();toast(p[0]+' loaded'+(p[2]?' (2 layers)':''))}
+  else if(id=='mfx'){push();s.fx=+v;ctl()}
+  else if(id=='msel'){ci=+v;if(n){push();n.i=ci}dyn();mblip(n&&n.t[0]||stg[0]||60,ci)}
+  else if(id=='mdsl'){cd=+v;if(n){push();n.d=cd}dyn()}
+  else if(id=='mcq'){e.target.value='';if(v==='')return;const a=n?n.t:stg,rt=a.length?Math.min(...a):(ko+1)*12,nt=CHQ[+v][1].map(x=>rt+x).filter(m=>m<=108);if(n){push();n.t=nt}else stg=nt;nt.forEach((m,k)=>setTimeout(()=>mblip(m,n?n.i:ci),k*70));dyn()}
+  else if(id=='mquick'){quick=e.target.checked;dyn()}});
  el.addEventListener('input',e=>{const s=cur();if(e.target.id=='mbp'){s.bpm=+e.target.value;$$('#mbv').textContent=s.bpm;info()}else if(e.target.id=='mvl'){s.q=7-e.target.value;$$('#mvv').textContent=e.target.value}else if(e.target.id=='mtx'){const r=musParse(e.target.value);$$('#mer').textContent=r.err||''}});
+ /* computer keyboard */
+ const KL='zsxdcvgbhnjm',KU='q2w3er5t6y7u',kd=e=>{if(!document.body.contains(el)){removeEventListener('keydown',kd);return}const t=e.target,k=e.key;
+  if((e.ctrlKey||e.metaKey)&&k.toLowerCase()=='z'&&!/^(INPUT|TEXTAREA)$/.test(t.tagName)){e.preventDefault();undo();return}
+  if(e.ctrlKey||e.metaKey||e.altKey||/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))return;
+  const l=k.toLowerCase();let i=KL.indexOf(l),o=0;if(l.length==1&&i<0){i=KU.indexOf(l);o=1}
+  if(l.length==1&&i>=0){e.preventDefault();if(!e.repeat)tog((ko+1+o)*12+i);return}
+  if(t.tagName=='BUTTON'&&(k==' '||k=='Enter'))return;
+  const s=cur();
+  if(k=='Enter'){e.preventDefault();add()}else if(k=='Delete'||k=='Backspace'){e.preventDefault();del()}
+  else if(k=='ArrowRight'||k=='ArrowLeft'){e.preventDefault();if(s.notes.length){sel=Math.max(0,Math.min(s.notes.length-1,sel<0?(k=='ArrowRight'?0:s.notes.length-1):sel+(k=='ArrowRight'?1:-1)));dyn();const x=s.notes[sel];x.t.forEach(m=>mblip(m,x.i))}}
+  else if(k=='['){ko=Math.max(1,ko-1);dyn()}else if(k==']'){ko=Math.min(6,ko+1);dyn()}
+  else if(k==' '){e.preventDefault();pv('both')}};
+ addEventListener('keydown',kd);
  ctl();dyn()}
 
 /* ---------- branching "choose your ending" posts ---------- */
