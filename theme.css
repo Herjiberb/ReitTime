@@ -190,3 +190,49 @@ input:not([type=color]):focus,textarea:focus{outline:0;border-color:var(--o);box
 .sgc .av.lg{width:60px;height:60px}.sgc small{color:var(--mu);font-size:12px;line-height:1.3;min-height:32px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .sgc .btn{padding:7px 14px;font-size:13px;margin-top:2px}
 .sgx{position:absolute;top:6px;right:6px;background:none;border:0;padding:4px;cursor:pointer;opacity:.6;display:grid;place-items:center}
+/* ReitTime ext v3 */
+.fmtb{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.fbt{border:1px solid var(--bd);background:var(--cd);color:var(--tx);border-radius:10px;padding:6px 10px;font:600 13px inherit;cursor:pointer;min-height:34px}
+.fbt:active{transform:scale(.94)}
+strong{font-weight:800}
+.cbx{position:relative;margin:8px 0;text-align:left}
+.cbx pre{margin:0;padding:34px 12px 12px;background:#0f1713;color:#d8f5e3;border-radius:12px;overflow:auto;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;white-space:pre;max-width:100%}
+.cpy{position:absolute;top:6px;right:6px;border:0;border-radius:8px;background:var(--g);color:#fff;font:600 12px inherit;padding:4px 10px;cursor:pointer;z-index:1}
+code.ic1{background:rgba(127,127,127,.18);padding:1px 6px;border-radius:6px;font:.92em ui-monospace,Menlo,Consolas,monospace}
+/* lightning text: blue/yellow shifting, outlined so it stays readable on light and dark */
+.zap{position:relative;font-weight:800;filter:drop-shadow(0 0 2px rgba(255,225,70,.9)) drop-shadow(0 0 6px rgba(58,150,255,.75))}
+.zc{display:inline-block;background:linear-gradient(90deg,#2a7bff,#ffe14a,#2a7bff);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.8px #06123a;paint-order:stroke fill;animation:zshift 2.2s linear infinite,zpoke 1.4s steps(1) infinite;animation-delay:calc(var(--i)*-.13s),calc(var(--i)*-.37s)}
+.zap::before{content:"";position:absolute;left:50%;top:50%;width:1.4em;height:1.4em;margin:-.7em;border-radius:50%;border:2px solid rgba(255,225,70,.85);opacity:0;pointer-events:none;animation:zrip 2.4s ease-out infinite}
+.zap::after{content:"";position:absolute;left:-6px;right:-6px;top:-.35em;bottom:-.35em;pointer-events:none;opacity:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 30' preserveAspectRatio='none'%3E%3Cpath d='M0 15L12 5 20 21 33 3 44 23 58 7 69 25 82 6 100 15' fill='none' stroke='%23ffe14a' stroke-width='2'/%3E%3Cpath d='M0 15L12 5 20 21 33 3 44 23 58 7 69 25 82 6 100 15' fill='none' stroke='%23fff' stroke-width='.7'/%3E%3C/svg%3E") center/100% 100% no-repeat;animation:zbolt 2.4s steps(1) infinite}
+@keyframes zshift{to{background-position:300% 0}}
+@keyframes zpoke{0%,100%{transform:none}7%{transform:translate(1px,-1px) skewX(-9deg) scale(1.1)}9%{transform:none}54%{transform:translate(-1px,1px) skewX(10deg) scale(1.14)}56%{transform:none}}
+@keyframes zrip{0%{transform:scale(.2);opacity:.9}40%{transform:scale(5,1.3);opacity:0}100%{opacity:0}}
+@keyframes zbolt{0%,100%{opacity:0}6%{opacity:1}9%{opacity:0}52%{opacity:1}55%{opacity:0}78%{opacity:.8}80%{opacity:0}}
+/* tree text: bark fill with a cream outline (readable on any theme) and a little bush */
+.tre{font-weight:800;letter-spacing:.02em;background:repeating-linear-gradient(95deg,#8a5a2b 0 6px,#6b4220 6px 9px,#a8723a 9px 14px);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.9px #f6e7c8;paint-order:stroke fill;filter:drop-shadow(0 1px 0 #3b2410)}
+.tre::after{content:"";display:inline-block;width:1.2em;height:.85em;margin-left:.15em;vertical-align:-.08em;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 28'%3E%3Crect x='19' y='20' width='3' height='8' fill='%236b4220'/%3E%3Cg fill='%232f9e4f'%3E%3Ccircle cx='10' cy='16' r='9'/%3E%3Ccircle cx='22' cy='12' r='11'/%3E%3Ccircle cx='32' cy='17' r='8'/%3E%3C/g%3E%3Cg fill='%2366d17a'%3E%3Ccircle cx='15' cy='9' r='3'/%3E%3Ccircle cx='27' cy='7' r='3'/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat}
+/* future posts */
+.obf{white-space:pre-wrap;word-break:break-all;font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--o);letter-spacing:.04em}
+.ftl{font-weight:700;margin-bottom:4px}
+.fb{filter:blur(26px) saturate(.5) brightness(.9);transform:scale(1.15);pointer-events:none;clip-path:inset(0)}
+.imgs,.card:has(.fb){overflow:hidden}
+.chk{display:flex;align-items:center;gap:8px;margin:8px 0;font-weight:600}
+input[type=datetime-local],select.nat{padding:10px 12px;border-radius:12px;border:1px solid var(--bd);background:var(--cd);color:var(--tx);font:600 15px inherit;width:100%;box-sizing:border-box;margin:6px 0}
+/* music */
+.mplay{border:0;background:none;color:inherit;display:inline-flex;align-items:center;gap:6px;cursor:pointer;padding:6px;position:relative}
+.mplay.chip{background:var(--g);color:#fff;padding:10px 18px}
+.mplay.on svg{animation:mpulse 1s ease-in-out infinite}
+@keyframes mpulse{50%{transform:scale(1.18)}}
+.mn{border:1px solid var(--bd);border-radius:14px;padding:10px;margin:8px 0;background:var(--cd)}
+.mnh{display:flex;align-items:center;gap:8px}.mnh b{width:22px;text-align:center}.mnh select{flex:1;margin:0}.mnh .mx{margin-left:auto}
+.mnt{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+.tw{display:inline-flex;align-items:center;gap:2px}.tw select.nat{width:auto;margin:0;padding:8px}
+.chip.sm{padding:6px 12px;font-size:13px}
+#mtx{width:100%;box-sizing:border-box;font:14px ui-monospace,Menlo,Consolas,monospace}
+.rl-mu{background:none;border:0;color:#fff;padding:4px;margin-left:auto;cursor:pointer}.rl-mu.mut{opacity:.4}
+/* star score */
+.ssc{display:inline-flex;align-items:center;gap:3px;border:0;background:none;color:var(--mu);font:600 13px inherit;padding:6px 4px;cursor:pointer}
+.ssb{text-align:center;margin:10px 0}.ssb b{display:block;font-size:44px;line-height:1;background:var(--g);-webkit-background-clip:text;background-clip:text;color:transparent}.ssb span{color:var(--mu)}
+.ssr{display:flex;align-items:center;gap:12px;padding:12px 14px;margin:8px 0;border:1px solid var(--bd);border-radius:14px;background:var(--cd)}
+.ssr span{flex:1}.ssr small{display:block;color:var(--mu)}.ssr em{font:800 24px inherit;font-style:normal;color:var(--o)}
+.ssr.sup em{color:#ffb400}.ssr.me{border-color:var(--o);box-shadow:0 0 0 2px rgba(255,138,31,.25)}
