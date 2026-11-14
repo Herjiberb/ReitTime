@@ -334,3 +334,5 @@ html.lglock #app,html.lglock #nav,html.lglock #top{visibility:hidden}
 .mtb small span{min-width:0;overflow:hidden;text-overflow:ellipsis}
 .mtb small em{font-style:normal;font-weight:700;color:var(--o);flex:none}
 .mtl{gap:3px}
+
+@media(min-width:700px){.rl-sides{cursor:ns-resize}.rl-sides .rl-frame{cursor:auto}.rl-nv{position:relative;z-index:2}}
