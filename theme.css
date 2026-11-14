@@ -236,3 +236,5 @@ input[type=datetime-local],select.nat{padding:10px 12px;border-radius:12px;borde
 .ssr{display:flex;align-items:center;gap:12px;padding:12px 14px;margin:8px 0;border:1px solid var(--bd);border-radius:14px;background:var(--cd)}
 .ssr span{flex:1}.ssr small{display:block;color:var(--mu)}.ssr em{font:800 24px inherit;font-style:normal;color:var(--o)}
 .ssr.sup em{color:#ffb400}.ssr.me{border-color:var(--o);box-shadow:0 0 0 2px rgba(255,138,31,.25)}
+
+.pk{margin-top:8px;padding:8px;border-radius:12px;background:rgba(127,127,127,.1)}.pk .seg{flex-wrap:wrap;margin:4px 0 8px;padding:3px;gap:3px}.pk .seg button{flex:1 0 13%;padding:9px 2px}.pk .seg button.sel{background:var(--g);color:#fff}.tw.on .chip{outline:2px solid var(--o);outline-offset:2px}
