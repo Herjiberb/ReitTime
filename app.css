@@ -131,3 +131,5 @@ body.sx #top .brand{display:none}body.sx .sf{flex:1}body.sx .sf.on input{flex:1;
 .rl-c .brn{background:rgba(0,0,0,.35);border-color:rgba(255,255,255,.5);color:#fff}
 .rl-c .brh{color:rgba(255,255,255,.8)}
 .rl-c .brt{max-height:30vh;overflow-y:auto}
+
+.pie{display:flex;align-items:center;gap:12px;margin:8px 0}.pie .av.lg{flex:none}.pis{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:6px}.pie [hidden],.pis[hidden]{display:none}
