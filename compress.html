@@ -1,0 +1,37 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ReitTime – compress all</title>
+<style>body{font:15px system-ui,sans-serif;max-width:640px;margin:24px auto;padding:0 16px;background:#f7faf7;color:#14201a}
+button{border:0;border-radius:999px;padding:12px 22px;font:600 15px inherit;background:linear-gradient(135deg,#ff8a1f,#2fd07a);color:#fff;cursor:pointer;margin:4px 6px 4px 0}button:disabled{opacity:.5}
+.c{background:#fff;border:1px solid #e3ebe6;border-radius:14px;padding:14px;margin:12px 0}#bar{height:10px;border-radius:9px;background:#e3ebe6;overflow:hidden}#bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff8a1f,#2fd07a)}
+pre{background:#0f1713;color:#d8f5e3;padding:12px;border-radius:12px;overflow:auto;font-size:12px;white-space:pre-wrap}#log{max-height:260px;overflow:auto;font:12px ui-monospace,monospace;white-space:pre-wrap}</style></head><body>
+<h2>Compress ALL existing data</h2>
+<p>Put this file next to <code>index.html</code> on your site (same address as the app), sign in to ReitTime as an admin in this browser, then open this page.</p>
+<div class="c" id="st">Checking…</div>
+<div class="c"><button id="dry" disabled>Dry run (count only)</button><button id="go" disabled>Compress everything</button><div id="bar" style="margin-top:10px"><i></i></div><div id="log"></div></div>
+<div class="c" id="fix" hidden><b>Some rows were blocked.</b> Paste this in Supabase → SQL Editor → Run, then run this page again:<pre>create policy admin_update_posts on posts for update
+  using (exists (select 1 from profiles where id = auth.uid() and is_admin));
+create policy admin_update_profiles on profiles for update
+  using (exists (select 1 from profiles p where p.id = auth.uid() and p.is_admin));</pre></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+const sb=supabase.createClient('https://iapsvqtdqfrayqjdfxcs.supabase.co','sb_publishable_gvpCiENT8LlNQZihavritw_h7Xablzs',{auth:{flowType:'pkce'}});
+const $=s=>document.querySelector(s),log=t=>{const l=$('#log');l.textContent+=t+'\n';l.scrollTop=1e9};
+async function run(b,C,f){return new Uint8Array(await new Response(new Blob([b]).stream().pipeThrough(new C(f))).arrayBuffer())}
+const hex=b=>{let s='\\x';for(const x of b)s+=(x<16?'0':'')+x.toString(16);return s},unhex=h=>{h=h.replace(/^\\x/,'');const b=new Uint8Array(h.length>>1);for(let i=0;i<b.length;i++)b[i]=parseInt(h.substr(i*2,2),16);return b};
+async function pack(s){const raw=new TextEncoder().encode(s);let o=raw,m=0;if(raw.length>24){const c=await run(raw,CompressionStream,'deflate-raw');if(c.length<raw.length){o=c;m=1}}const b=new Uint8Array(o.length+1);b[0]=m;b.set(o,1);const h=hex(b),u=unhex(h);const back=new TextDecoder().decode(u[0]==1?await run(u.subarray(1),DecompressionStream,'deflate-raw'):u.subarray(1));if(back!==s)throw new Error('round-trip mismatch');return{h,n:b.length}}
+let ok=false;
+(async()=>{if(typeof CompressionStream=='undefined')return $('#st').textContent='This browser lacks CompressionStream. Use a current Chrome, Edge, Safari or Firefox.';
+ const {data:{session}}=await sb.auth.getSession();if(!session)return $('#st').innerHTML='Not signed in. Sign in at the app first (same address), then reload this page.';
+ const {data:me}=await sb.from('profiles').select('username,is_admin').eq('id',session.user.id).maybeSingle();
+ const pr=await sb.from('posts').select('body_z').limit(1);if(pr.error)return $('#st').textContent='Run migration_v3.sql in Supabase first ('+pr.error.message+').';
+ if(!me||!me.is_admin)return $('#st').textContent='Signed in as @'+(me&&me.username)+', who is not an admin.';
+ $('#st').textContent='Signed in as admin @'+me.username+'. Ready.';$('#dry').disabled=$('#go').disabled=false})();
+async function sweep(table,sel,mk,dry,prog){let last=null,seen=0,n=0,bad=0,b4=0,af=0;for(;;){let q=sb.from(table).select(sel).order('id').limit(100);if(last!==null)q=q.gt('id',last);const {data,error}=await q;if(error){log(table+': '+error.message);break}if(!data.length)break;
+ for(const r of data){last=r.id;seen++;const x=await mk(r);if(!x)continue;n++;b4+=x.b;af+=x.a;if(!dry){const {data:u,error:e}=await sb.from(table).update(x.p).eq('id',r.id).select('id');if(e||!u||!u.length){bad++;if(bad<4)log(table+' '+r.id+' blocked'+(e?': '+e.message:''))}}}
+ prog(table+': '+seen+' scanned, '+n+(dry?' to compress':' compressed'))}
+ log(table+': ~'+b4+' → ~'+af+' bytes'+(b4?' ('+Math.round(100-af/b4*100)+'% smaller)':'')+(bad?' · '+bad+' BLOCKED':''));if(bad)$('#fix').hidden=false}
+async function start(dry){$('#dry').disabled=$('#go').disabled=true;$('#log').textContent='';$('#fix').hidden=true;const bar=$('#bar i');bar.style.width='15%';const prog=t=>{$('#st').textContent=t};
+ await sweep('posts','id,body,scene,body_z,scene_z',async r=>{const p={};let b=0,a=0;if(r.body&&!r.body_z){const z=await pack(r.body);p.body_z=z.h;p.body='';b+=r.body.length;a+=z.n}if(r.scene&&!r.scene_z){const j=JSON.stringify(r.scene),z=await pack(j);p.scene_z=z.h;p.scene=null;b+=j.length;a+=z.n}return Object.keys(p).length?{p,b,a}:null},dry,prog);bar.style.width='55%';
+ await sweep('profiles','id,bio,scene,bio_z,scene_z',async r=>{const p={};let b=0,a=0;if(r.bio&&!r.bio_z){const z=await pack(r.bio);p.bio_z=z.h;p.bio='';b+=r.bio.length;a+=z.n}if(r.scene&&Object.keys(r.scene).length&&!r.scene_z){const j=JSON.stringify(r.scene),z=await pack(j);p.scene_z=z.h;p.scene={};b+=j.length;a+=z.n}return Object.keys(p).length?{p,b,a}:null},dry,prog);
+ bar.style.width='100%';$('#st').textContent=dry?'Dry run finished.':'Finished.';$('#dry').disabled=$('#go').disabled=false}
+$('#dry').onclick=()=>start(true);$('#go').onclick=()=>{if(confirm('Compress ALL posts and profiles now?'))start(false)};
+</script></body></html>
