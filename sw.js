@@ -1,5 +1,5 @@
 // Single cache, network-first: always fetch fresh, overwrite the cached copy, fall back offline.
-const C='rt';
+const C='rt2';
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>c.addAll(['./','index.html','app.css','app.js','legal.js','theme.css','manifest.json','icon.svg'].map(u=>new Request(u,{cache:'reload'})))))});
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(n=>n!==C).map(n=>caches.delete(n)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{
