@@ -93,7 +93,7 @@ function msched(ctx,dst,s,t0){const out=mfx(ctx,dst,s),sp=60/s.bpm;let t=t0;for(
 const MGC={},MGK=[];
 function wavUrl(d,sr){const n=d.length,b=new ArrayBuffer(44+n*2),v=new DataView(b),w=(o,t)=>{for(let i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i))};w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVEfmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);for(let i=0;i<n;i++){const x=Math.max(-1,Math.min(1,d[i]));v.setInt16(44+i*2,x<0?x*32768:x*32767,true)}return URL.createObjectURL(new Blob([b],{type:'audio/wav'}))}
 function mgain(key,ss){if(MGC[key])return MGC[key];MGK.push(key);while(MGK.length>8){const o=MGK.shift(),r=MGC[o];delete MGC[o];}
- return MGC[key]=(async()=>{try{const d0=mixDur(ss),sr=d0>60?11025:22050,N=Math.ceil(d0*sr),tail=Math.ceil(3*sr),oc=new OfflineAudioContext(1,N+tail,sr);ss.forEach(s=>msched(oc,oc.destination,s,0));const r=(await oc.startRendering()).getChannelData(0),o=new Float32Array(N);o.set(r.subarray(0,N));for(let i=0;i<tail&&i<N;i++)o[i]+=r[N+i];let pk=0;for(let i=0;i<N;i++){const a=o[i]<0?-o[i]:o[i];if(a>pk)pk=a}const g=pk>0?.95/pk:1;for(let i=0;i<N;i++)o[i]*=g;return{o,sr,d:d0}}catch(e){console.error(e);return null}})()}
+ return MGC[key]=(async()=>{try{const d0=mixDur(ss),sr=d0>180?22050:d0>90?32000:44100,N=Math.ceil(d0*sr),tail=Math.ceil(3*sr),oc=new OfflineAudioContext(2,N+tail,sr);ss.forEach(s=>msched(oc,oc.destination,s,0));const rb=await oc.startRendering(),o=[0,1].map(c=>{const r=rb.getChannelData(c),x=new Float32Array(N);x.set(r.subarray(0,N));for(let i=0;i<tail&&i<N;i++)x[i]+=r[N+i];return x});let pk=0;for(const x of o)for(let i=0;i<N;i++){const a=x[i]<0?-x[i]:x[i];if(a>pk)pk=a}const g=pk>0?.95/pk:1;for(const x of o)for(let i=0;i<N;i++)x[i]*=g;return{o,sr,d:d0}}catch(e){console.error(e);return null}})()}
 const musSet=(a,b)=>[a&&musDec(a),b&&musDec(b)].filter(Boolean);
 const mprep=p=>{const m=p&&p.meta&&p.meta.mus,ss=m&&musSet(m,p.meta.mus2);if(ss&&ss.length)mgain(m+'|'+(p.meta.mus2||''),ss)};
 let AC=null;const MP={cur:null};
@@ -107,7 +107,7 @@ document.addEventListener('visibilitychange',()=>{const p=MP.cur;if(p&&p.on&&!p.
 /* gapless: the loop is one AudioBuffer (reverb/echo tail already folded onto the start) played with source.loop, so the end flows straight back into the beginning.
    The graph goes through a MediaStream into an <audio> element so it also keeps playing in background tabs / locked screens. */
 async function mPlay(enc,enc2,title){mstop();const ss=musSet(enc,enc2),ctx=actx();if(!ss.length||!ctx)return null;const key=enc+'|'+(enc2||''),p={enc:key,on:true,paused:false};MP.cur=p;const r=await mgain(key,ss);if(!p.on)return p;if(!r){MP.cur=null;p.on=false;toast("Couldn't play this music");return p}
- try{const buf=ctx.createBuffer(1,r.o.length,r.sr);buf.copyToChannel(r.o,0);const src=ctx.createBufferSource();src.buffer=buf;src.loop=true;src.loopStart=0;src.loopEnd=buf.duration;p.src=src;
+ try{const buf=ctx.createBuffer(2,r.o[0].length,r.sr);buf.copyToChannel(r.o[0],0);buf.copyToChannel(r.o[1],1);const src=ctx.createBufferSource();src.buffer=buf;src.loop=true;src.loopStart=0;src.loopEnd=buf.duration;p.src=src;
   let viaEl=false;if(ctx.createMediaStreamDestination){try{const dst=ctx.createMediaStreamDestination();src.connect(dst);const a=maud();a.srcObject=dst.stream;p.dst=dst;await a.play();viaEl=true}catch{try{src.disconnect()}catch{}viaEl=false}}
   if(!viaEl)src.connect(ctx.destination);
   if(ctx.state=='suspended')await ctx.resume();if(!p.on){try{src.disconnect()}catch{}return p}
@@ -148,7 +148,7 @@ function musicEditor(init,cb){init=init||{};
  <h4 class="sg">Timeline <small class="mu" id="mcn"></small></h4><div class="mtl" id="mtl"></div>
  <div class="mtools"><button type="button" class="chip sm" id="mund" title="Undo (Ctrl+Z)">↶ Undo</button><button type="button" class="chip sm" id="mlf" title="Move left">◀</button><button type="button" class="chip sm" id="mrt" title="Move right">▶</button><button type="button" class="chip sm" id="mdup">Duplicate</button><button type="button" class="chip sm" id="mrest">+ Rest</button><button type="button" class="chip sm" id="mdel">${ic('trash',14)}</button><button type="button" class="chip sm" id="mclr">Clear</button></div>
  <h4 class="sg">Note</h4><p class="mst" id="mst"></p>
- <div class="mrow2"><label class="mlb">Sound<select id="msel">${INST.map((x,k)=>`<option value="${k}">${x}</option>`).join('')}</select></label><label class="mlb">Length (beats)<select id="mdsl">${DUR.map((x,k)=>`<option value="${k}">${x}</option>`).join('')}</select></label></div>
+ <div class="mrow2"><label class="mlb">Sound<select id="msel">${INST.map((x,k)=>`<option value="${k}">${x}</option>`).join('')}</select></label><label class="mlb">Length (beats)<select id="mdsl">${DUR.map((x,k)=>`<option value="${k}">${x} beat${x==1?'':'s'}${DN[x]?' · '+DN[x]:''}</option>`).join('')}</select></label></div>
  <div class="mrow2"><label class="mlb">Chord shape<select id="mcq"><option value="">Pick a chord…</option>${CHQ.map((c,i)=>`<option value="${i}">${c[0]}</option>`).join('')}</select></label><div class="mlb">Octave<div class="mstep"><button type="button" id="mo1" aria-label="Octave down">−</button><b id="mov"></b><button type="button" id="mo2" aria-label="Octave up">+</button></div></div></div>
  <div id="mkb"></div>
  <div class="mrow2 mgo"><button type="button" class="btn" id="mcadd"></button><button type="button" class="chip" id="mcclr">Clear keys</button></div>
@@ -158,13 +158,13 @@ function musicEditor(init,cb){init=init||{};
  <details class="mdt"><summary>Computer keyboard shortcuts</summary><p class="mu">Piano keys: <b>Z S X D C V G B H N J M</b> (low octave) and <b>Q 2 W 3 E R 5 T 6 Y 7 U</b> (high octave). They toggle tones on the selected note, or on the new note. <b>Enter</b> add / done · <b>← →</b> select note · <b>Delete</b> remove note · <b>[ ]</b> octave · <b>Space</b> play · <b>Ctrl+Z</b> undo.</p></details>
  <p class="mu" id="mer" style="color:#e5484d"></p>
  <div class="row"><button class="btn" id="mok">Use this music</button><button class="btn ghost" id="mrm">Remove all</button></div>`);
- el.classList.add('mfull');const $$=s=>el.querySelector(s),W=[0,2,4,5,7,9,11];
+ el.classList.add('mfull');const $$=s=>el.querySelector(s),W=[0,2,4,5,7,9,11],setv=(q,v)=>{const x=$$(q);x.value=v;if(x._sync)x._sync();if(x.type=='range')x.dispatchEvent(new Event('input',{bubbles:true}))},DN={.125:'32nd',.25:'16th',.375:'dotted 16th',.5:'8th',.75:'dotted 8th',1:'quarter',1.5:'dotted quarter',2:'half',3:'dotted half',4:'whole'};
  const info=()=>{const d=k=>has(k)?mdur(T[k]).toFixed(1)+'s':'—';$$('#mif').textContent=`Loops forever. Track A ${d('a')} · Track B ${d('b')}${has('a')&&has('b')?' — the shorter waits for the longer, then both restart.':'. Add a second track to layer sounds.'}`};
- const ctl=()=>{const s=cur();$$('#mbp').value=s.bpm;$$('#mbv').textContent=s.bpm;$$('#mvl').value=7-s.q;$$('#mvv').textContent=7-s.q;$$('#mfx').value=s.fx;el.querySelectorAll('#mtk button').forEach(b=>b.classList.toggle('sel',b.dataset.tk==tk));if(!MP.cur||MP.cur.enc!=='pv')$$('#mps').innerHTML=ic('mplay',18)+' Play layer '+tk.toUpperCase();$$('#mtx').value=musTxt(s)};
+ const ctl=()=>{const s=cur();setv('#mbp',s.bpm);$$('#mbv').textContent=s.bpm;setv('#mvl',7-s.q);$$('#mvv').textContent=7-s.q;setv('#mfx',s.fx);el.querySelectorAll('#mtk button').forEach(b=>b.classList.toggle('sel',b.dataset.tk==tk));if(!MP.cur||MP.cur.enc!=='pv')$$('#mps').innerHTML=ic('mplay',18)+' Play layer '+tk.toUpperCase();$$('#mtx').value=musTxt(s)};
  const dyn=()=>{const s=cur(),n=sel>=0?s.notes[sel]:null,on=new Set(n?n.t:stg);let wk='',bk='';
-  $$('#msel').value=n?n.i:ci;$$('#mdsl').value=n?n.d:cd;
-  $$('#mtl').innerHTML=s.notes.map((x,i)=>`<button type="button" class="mtb ${i==sel?'sel':''}" data-n="${i}" title="${nm(x.t)}" style="flex:0 0 ${Math.max(58,DUR[x.d]*34)}px"><b>${x.t.length?x.t.slice(0,2).map(mName).join(' ')+(x.t.length>2?' +'+(x.t.length-2):''):'rest'}</b><span class="mtbs">${x.t.map(m=>`<i style="bottom:${(m-24)/84*100}%"></i>`).join('')}</span><small>${INST[x.i]}</small></button>`).join('')||'<span class="mu mtem">Tap piano keys below, then press Add</span>';
-  $$('#mcn').textContent=s.notes.length+'/'+MAXN;
+  setv('#msel',n?n.i:ci);setv('#mdsl',n?n.d:cd);
+  $$('#mtl').innerHTML=s.notes.map((x,i)=>`<button type="button" class="mtb ${i==sel?'sel':''}" data-n="${i}" title="${nm(x.t)}" style="flex:0 0 ${Math.max(58,DUR[x.d]*40)}px"><b>${x.t.length?x.t.slice(0,2).map(mName).join(' ')+(x.t.length>2?' +'+(x.t.length-2):''):'rest'}</b><span class="mtbs">${x.t.map(m=>`<i style="bottom:${(m-24)/84*100}%"></i>`).join('')}</span><span class="mtd" title="${DUR[x.d]} beats"><u style="width:${Math.max(6,Math.min(100,DUR[x.d]/4*100))}%"></u></span><small><span>${INST[x.i]}</span><em>${DUR[x.d]}♩</em></small></button>`).join('')||'<span class="mu mtem">Tap piano keys below, then press Add</span>';
+  $$('#mcn').textContent=s.notes.length+'/'+MAXN+' · '+s.notes.reduce((a,x)=>a+DUR[x.d],0)+' beats';
   for(let o=0;o<2;o++)W.forEach((nn,i)=>{const m=(ko+o+1)*12+nn,idx=o*7+i;wk+=`<button type="button" class="kw ${on.has(m)?'on':''}" data-m="${m}"><small>${nn==0?'C'+(ko+o):''}</small></button>`;if([0,2,5,7,9].includes(nn))bk+=`<button type="button" class="kb ${on.has(m+1)?'on':''}" data-m="${m+1}" style="left:${(idx+1)/14*100}%"></button>`});
   $$('#mkb').innerHTML=`<div class="kbd"><div class="kws">${wk}</div>${bk}</div>`;$$('#mov').textContent='C'+ko+'–B'+(ko+1);
   $$('#mst').innerHTML=n?`Editing <b>note ${sel+1}</b>: ${nm(n.t)}. Tap keys to add or remove tones — nothing new is added.`:stg.length?`New note: <b>${nm(stg)}</b>. Press Add when ready.`:quick?'Quick add is on: each key tap adds a note.':'Tap keys to build a note or chord, then press Add.';
@@ -199,11 +199,11 @@ function musicEditor(init,cb){init=init||{};
   if(q('#mok')){let a=has('a')?musEnc(T.a):null,c=has('b')?musEnc(T.b):null;if(!a){a=c;c=null}if(!a)return toast('Add a note first');mstop();closeSheet();cb({a,b:c});return}
   if(q('#mrm')){mstop();closeSheet();cb({a:null,b:null})}});
  el.addEventListener('change',e=>{const id=e.target.id,v=e.target.value,s=cur(),n=sel>=0?s.notes[sel]:null;
-  if(id=='mpre'){e.target.value='';if(v==='')return;const p=PRE[+v];push();T.a=musParse(p[1]);T.b=p[2]?musParse(p[2]):blank();tk='a';sel=-1;stg=[];ctl();dyn();toast(p[0]+' loaded'+(p[2]?' (2 layers)':''))}
+  if(id=='mpre'){setv('#mpre','');if(v==='')return;const p=PRE[+v];push();T.a=musParse(p[1]);T.b=p[2]?musParse(p[2]):blank();tk='a';sel=-1;stg=[];ctl();dyn();toast(p[0]+' loaded'+(p[2]?' (2 layers)':''))}
   else if(id=='mfx'){push();s.fx=+v;ctl()}
   else if(id=='msel'){ci=+v;if(n){push();n.i=ci}dyn();mblip(n&&n.t[0]||stg[0]||60,ci)}
   else if(id=='mdsl'){cd=+v;if(n){push();n.d=cd}dyn()}
-  else if(id=='mcq'){e.target.value='';if(v==='')return;const a=n?n.t:stg,rt=a.length?Math.min(...a):(ko+1)*12,nt=CHQ[+v][1].map(x=>rt+x).filter(m=>m<=108);if(n){push();n.t=nt}else stg=nt;nt.forEach((m,k)=>setTimeout(()=>mblip(m,n?n.i:ci),k*70));dyn()}
+  else if(id=='mcq'){setv('#mcq','');if(v==='')return;const a=n?n.t:stg,rt=a.length?Math.min(...a):(ko+1)*12,nt=CHQ[+v][1].map(x=>rt+x).filter(m=>m<=108);if(n){push();n.t=nt}else stg=nt;nt.forEach((m,k)=>setTimeout(()=>mblip(m,n?n.i:ci),k*70));dyn()}
   else if(id=='mquick'){quick=e.target.checked;dyn()}});
  el.addEventListener('input',e=>{const s=cur();if(e.target.id=='mbp'){s.bpm=+e.target.value;$$('#mbv').textContent=s.bpm;info()}else if(e.target.id=='mvl'){s.q=7-e.target.value;$$('#mvv').textContent=e.target.value}else if(e.target.id=='mtx'){const r=musParse(e.target.value);$$('#mer').textContent=r.err||''}});
  /* computer keyboard */

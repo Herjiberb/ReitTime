@@ -325,3 +325,12 @@ html.lglock #app,html.lglock #nav,html.lglock #top{visibility:hidden}
 .msw input:checked+.swt{background:var(--g)}.msw input:checked+.swt:after{transform:translateX(18px)}
 .msw input:focus-visible+.swt{outline:3px solid var(--o);outline-offset:2px}
 .mdt{border:1px solid var(--bd);border-radius:14px;padding:8px 12px;background:var(--cd)}.mdt summary{cursor:pointer;font-weight:600;font-size:14px}.mdt[open] summary{margin-bottom:8px}
+
+.mtb .mtbs{bottom:34px}
+.mtb .mtd{position:absolute;left:5px;right:5px;bottom:19px;height:7px;border-radius:4px;background:rgba(127,127,127,.22);z-index:1;overflow:hidden}
+.mtb .mtd u{display:block;height:100%;border-radius:4px;background:var(--o);text-decoration:none}
+.mtb.sel .mtd u{background:var(--gr,#1fb868)}
+.mtb small{display:flex;justify-content:space-between;gap:4px;align-items:center;height:16px;box-sizing:border-box}
+.mtb small span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.mtb small em{font-style:normal;font-weight:700;color:var(--o);flex:none}
+.mtl{gap:3px}
