@@ -184,7 +184,7 @@ window.dhPromo=()=>{if(DH.bad||!DH.st||+localStorage.dhPx>Date.now())return'';co
 /* ---------- actions ---------- */
 Object.assign(acts,{
  dhopen(){openFlow()},dhodds(){oddsSheet()},
- dhcog(){const el=sheet(`<h3>Pack settings</h3><label class="row" style="gap:10px"><input type="checkbox" id="d1" ${localStorage.dhOne=='1'?'checked':''}> One-tap open (skip the tap-to-charge)</label>`);$('#d1').onchange=e=>{localStorage.dhOne=e.target.checked?'1':'0'}},
+ dhcog(){const el=sheet(`<h3>Pack settings</h3><label class="msw"><input type="checkbox" id="d1" ${localStorage.dhOne=='1'?'checked':''}><span class="swt"></span><span>One-tap open <small class="mu">— skip the tap-to-charge</small></span></label>`);$('#d1').onchange=e=>{localStorage.dhOne=e.target.checked?'1':'0'}},
  dhcard(d){cardSheet(d.id);const el=document.querySelector('.bd:last-of-type');el&&(el._cid=d.id)},
  dhwear(){closeSheet(true);piEditor(piCur(),piSave,true)},
  dhchip(d){const v=d.v,k=d.k;if(k=='vr')V.rar=v;if(k=='vl')V.slot=v;if(k=='mk')DH.m.kind=v||'all';if(k=='mf')DH.m.fmt=v||'all';if(k=='mr')DH.m.rar=v;if(k=='mn')DH.m.fresh=!!v;(k[0]=='v'?vaultPg:renderMarket)()},
