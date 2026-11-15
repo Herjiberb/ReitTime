@@ -18,7 +18,7 @@ let busy=false;const lock=async f=>{if(busy)return;busy=true;try{return await f(
 async function loadCat(){if(DH.cards&&DH.cards.length)return;const {data,error}=await sb.from('dh_cards').select('*').order('odds_w',{ascending:false});if(error||!data||!data.length){DH.cards=null;DH.cmap={};throw new Error('Could not load cards'+(error?': '+error.message:' (empty)'))}DH.cards=data;DH.cmap={};DH.cards.forEach(c=>{c.rarity=String(c.rarity||'').trim().toLowerCase();if(!RAR[c.rarity])c.rarity='common';if(!SLOT[c.slot])c.slot='x';c.idx=+c.idx||0;c.odds_w=+c.odds_w||0;c.name=c.name||('Card '+c.id);DH.cmap[c.id]=c})}
 async function loadInv(){const {data,error}=await sb.from('dh_inv').select('card,qty,locked').eq('user_id',me.id);if(error)return;DH.inv={};DZ.inv.clear();(data||[]).forEach(r=>{DH.inv[r.card]=r;if(r.qty>0&&DH.cmap[r.card])DZ.inv.add(DH.cmap[r.card].slot+DH.cmap[r.card].idx)})}
 async function loadSt(){DH.st=await rpc('dh_status');S.pkOff=Date.parse(DH.st.now)-Date.now();const b=document.getElementById('dhbal');if(b)b.textContent=num(DH.st.balance);return DH.st}
-window.dhBoot=()=>{DH.ready=(async()=>{try{await loadCat();await Promise.all([loadSt(),loadInv()])}catch(e){DH.bad=true}})()};
+window.dhBoot=()=>{DH.ready=(async()=>{try{await loadCat();await Promise.all([loadSt(),loadInv()])}catch(e){DH.bad=true;DH.err=e}})()};
 const free=id=>{const r=DH.inv[id];return r?r.qty-r.locked:0};
 const odds=()=>{const t=DH.cards.reduce((a,c)=>a+c.odds_w,0),by={};DH.cards.forEach(c=>by[c.rarity]=(by[c.rarity]||0)+c.odds_w);return{t,by}};
 const pct=(w,t)=>{const p=w/t*100;return(p<1?p.toFixed(2):p<10?p.toFixed(1):Math.round(p))+'%'};
@@ -45,8 +45,8 @@ const TABS=[['','Packs','cards'],['vault','My Vault','bookmark'],['market','Mark
 const shell=(tab,body)=>`<div class="dhhead"><h2 class="h">${ic('cards',22)} DeckHub</h2><a class="dhbal" href="#/deck/rewards" aria-label="Your tokens">${tok(DH.st?DH.st.balance:0,18)}</a></div><div class="dhseg" role="tablist">${TABS.map(([k,n,i])=>`<a href="#/deck${k?'/'+k:''}" role="tab" class="${k==tab?'on':''}">${ic(i,18)}<span>${n}</span></a>`).join('')}</div>${body}`;
 async function deckPg(b){try{return await deckPg0(b)}catch(e){console.error(e);A.innerHTML=`<h2 class="h">${ic('cards',22)} DeckHub</h2><p class="empty">DeckHub error: ${esc(e&&e.message||e)}</p>`}}
 async function deckPg0(b){b=b||'';if(!DH.ready)window.dhBoot();await DH.ready;
- if(DH.bad||!DH.st){DH.bad=false;try{await loadCat();await Promise.all([loadSt(),loadInv()])}catch{DH.bad=true}}
- if(DH.bad||!DH.st||!DH.cards)return A.innerHTML=`<h2 class="h">${ic('cards',22)} DeckHub</h2><p class="empty">DeckHub isn't switched on yet. Run <b>migration_v5_deckhub.sql</b> in Supabase, then reload.</p>`;
+ if(DH.bad||!DH.st){DH.bad=false;try{await loadCat();await Promise.all([loadSt(),loadInv()])}catch(e){DH.bad=true;DH.err=e}}
+ if(DH.bad||!DH.st||!DH.cards)return A.innerHTML=`<h2 class="h">${ic('cards',22)} DeckHub</h2><p class="empty">DeckHub failed to load: <b>${esc(DH.err&&DH.err.message||'unknown error')}</b><br><small>(If it says a function or relation does not exist, the migration is missing.)</small></p>`;
  await loadSt();await loadInv();
  if(b=='vault')return vaultPg();if(b=='market')return marketPg();if(b=='rewards')return rewardsPg();return shopPg()}
 window.deckPg=deckPg;
