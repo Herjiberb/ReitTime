@@ -255,3 +255,34 @@ body.sx #top .brand{display:none}body.sx .sf{flex:1}body.sx .sf.on input{flex:1;
 .dhseg a{transition:background .15s}.dhl:hover{border-color:var(--o)}
 .dhmk .btn.sm{white-space:nowrap;align-self:stretch;display:inline-flex;align-items:center;gap:4px}
 .dhres{margin:8px 2px 10px}
+
+/* ---- DeckHub performance pass: same look, cheaper to draw ----
+   Rules: animate only transform/opacity, no animated filters/blur/color-mix, effects only where cards are big. */
+.dhov{background:radial-gradient(120% 100% at 50% 40%,#1a1208,#06040a)}
+.dhov.build{background:radial-gradient(120% 100% at 50% 40%,#1a1208,#06040a);transition:opacity .25s}
+.dhtint{position:absolute;inset:0;pointer-events:none;background:radial-gradient(100% 90% at 50% 45%,var(--rc,#ffb21f),transparent 70%);opacity:calc(var(--ch,0)*.45);transition:opacity .2s}
+.dhov.build .dhtint{opacity:.75;transition:opacity var(--ms,1s) ease-in}.dhov.face .dhtint{opacity:.4}
+.dhbeams{width:160vmax;height:160vmax;left:50%;top:46%;translate:none;transform:translate(-50%,-50%);filter:none;will-change:transform,opacity;opacity:calc(var(--ch,0)*.9);transition:opacity .2s;
+ background:repeating-conic-gradient(from 0deg,transparent 0 4deg,rgba(255,226,150,.2) 6deg,rgba(255,226,150,.5) 8deg,rgba(255,226,150,.2) 10deg,transparent 12deg 22deg);
+ -webkit-mask:radial-gradient(closest-side,transparent 3%,#000 16%,transparent 60%);mask:radial-gradient(closest-side,transparent 3%,#000 16%,transparent 60%);animation:dhspin2 34s linear infinite}
+.dhbeams.on{opacity:.7;background:repeating-conic-gradient(from 0deg,transparent 0 4deg,color-mix(in srgb,var(--rc,#ffb21f) 45%,#fff0) 6deg,color-mix(in srgb,var(--rc,#ffb21f) 75%,#fff) 8deg,color-mix(in srgb,var(--rc,#ffb21f) 45%,#fff0) 10deg,transparent 12deg 22deg)}
+.dhov.build .dhbeams.on{opacity:1;filter:none;animation-duration:5s}.dhov.lv0.build .dhbeams.on{opacity:.25}
+@keyframes dhspin2{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.dhpkw .pk3d{filter:drop-shadow(0 12px 18px rgba(120,60,0,.45))}
+.dhpkw::before{content:"";position:absolute;inset:-28%;border-radius:50%;pointer-events:none;background:radial-gradient(closest-side,rgba(255,205,90,.95),rgba(255,160,40,.35) 55%,transparent 72%);opacity:var(--gl,0);transition:opacity .15s}
+.dhpkw:not(.tearing) .pk3d{translate:none}
+@keyframes dhhit{0%{scale:1;translate:0 0}30%{scale:.93;translate:calc(var(--sh,0px)*-1) 0}65%{translate:var(--sh,0px) 0}100%{scale:1;translate:0 0}}
+.dhpkw.tearing .pk3d{animation:dhtear .9s ease-in forwards}@keyframes dhtear{0%{scale:1}30%{scale:1.15;rotate:-3deg}100%{scale:2.6;opacity:0}}
+.dhmeter i{width:100%;transform-origin:left center;transform:scaleX(0);will-change:transform;box-shadow:none}
+/* cards: static sheen in grids, animated only on big/reveal cards */
+.dc{contain:layout style}.dcf{contain:paint}
+.dcs{background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.4) 50%,transparent 65%);animation:none;opacity:0;transform:translateX(-30%)}
+.r-rare .dcs,.r-epic .dcs,.r-legendary .dcs,.r-mythic .dcs{opacity:.45}.r-uncommon .dcs{opacity:.2}
+.dc.big .dcs,.dhrow .dc .dcs{animation:dhsh2 3.6s ease-in-out infinite;will-change:transform}
+@keyframes dhsh2{0%{transform:translateX(-120%)}60%,100%{transform:translateX(120%)}}
+.r-legendary,.r-mythic{animation:none}.r-mythic .dcf::before{animation:none;opacity:.55}
+.dc.big.r-legendary,.dc.big.r-mythic,.dhrow .r-legendary,.dhrow .r-mythic{animation:dhglow 2.6s ease-in-out infinite}
+.dc.big.r-mythic .dcf::before,.dhrow .r-mythic .dcf::before{animation:dhspin 8s linear infinite;will-change:transform}
+.dcwrap.build{will-change:transform,filter}
+.dhnew,.dcnew{will-change:transform}
+@media(max-width:480px){.dhbeams{width:130vmax;height:130vmax}}
