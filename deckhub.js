@@ -71,9 +71,17 @@ function openFlow(){const st=DH.st;if(st.opened_today>=st.daily_cap)return toast
  let lc=-1;const paint=()=>{bar.style.transform=`scaleX(${charge/100})`;const q=Math.round(charge/5);if(q!=lc){lc=q;const k=q*.05;ov.style.setProperty('--ch',k);pk.style.setProperty('--gl',k);pk.style.setProperty('--sh',(k*6).toFixed(1)+'px')}};
  const tick=t=>{if(done)return;const dt=(t-(tick.l||t))/1000;tick.l=t;if(charge>0&&charge<100){charge=Math.max(0,charge-40*dt);paint()}raf=requestAnimationFrame(tick)};raf=requestAnimationFrame(tick);
  const burst=async()=>{if(done)return;done=true;hint.textContent='';pk.classList.add('tearing');ov.classList.add('flash');
-  const res=await Promise.all([rpc('dh_open_pack',{p_pack:'desert'}).then(async r=>{applyPull(r);await Promise.race([Promise.all(r.cards.map(id=>{const m=new Image();m.src=artUri(DH.cmap[id]);return m.decode?m.decode().catch(()=>0):0})),sleep(1200)]);return{r}},e=>({e})),sleep(900)]).then(a=>a[0]);
+  try{
+  const res=await Promise.all([rpc('dh_open_pack',{p_pack:'desert'}).then(async r=>{
+    /* server has already committed: never let a client-side hiccup lose the pull */
+    if(!r||!Array.isArray(r.cards))throw new Error('Bad pack response');
+    if(!DH.cmap||r.cards.some(id=>!DH.cmap[id])){DH.cards=null;DH.cmap=null;await loadCat()}
+    applyPull(r);
+    try{await Promise.race([Promise.all(r.cards.map(id=>{try{const m=new Image();m.src=artUri(DH.cmap[id]);return m.decode?m.decode().catch(()=>0):0}catch{return 0}})),sleep(1200)])}catch{}
+    return{r}},e=>({e})),sleep(900)]).then(a=>a[0]);
   if(res.e){toast(res.e.message);return close()}
-  DH.st=res.r.status;await loadInv().catch(()=>{});const b=document.getElementById('dhbal');if(b)b.textContent=num(DH.st.balance);reveal(ov,res.r,close)};
+  DH.st=res.r.status;await loadInv().catch(()=>{});applyPull({cards:[]});const b=document.getElementById('dhbal');if(b)b.textContent=num(DH.st.balance);reveal(ov,res.r,close)
+  }catch(e){console.error(e);toast('Pack opened! Your cards are in your vault.');try{await loadCat();await loadInv()}catch{}close()}};
  pk.addEventListener('pointerdown',e=>{if(done)return;if(!e.isTrusted)return;                    // scripted/synthetic clicks are ignored
   const now=performance.now();if(now-t0<500)return;                                                   // can't pre-fire before the pack is on screen
   if(one){burst();return}
