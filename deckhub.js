@@ -16,7 +16,7 @@ let busy=false;const lock=async f=>{if(busy)return;busy=true;try{return await f(
 
 /* ---------- data ---------- */
 async function loadCat(){if(DH.cards)return;const {data}=await sb.from('dh_cards').select('*').order('odds_w',{ascending:false});DH.cards=data||[];DH.cmap={};DH.cards.forEach(c=>DH.cmap[c.id]=c)}
-async function loadInv(){const {data}=await sb.from('dh_inv').select('card,qty,locked').eq('user_id',me.id);DH.inv={};DZ.inv.clear();(data||[]).forEach(r=>{DH.inv[r.card]=r;if(r.qty>0&&DH.cmap[r.card])DZ.inv.add(DH.cmap[r.card].slot+DH.cmap[r.card].idx)})}
+async function loadInv(){const {data,error}=await sb.from('dh_inv').select('card,qty,locked').eq('user_id',me.id);if(error)return;DH.inv={};DZ.inv.clear();(data||[]).forEach(r=>{DH.inv[r.card]=r;if(r.qty>0&&DH.cmap[r.card])DZ.inv.add(DH.cmap[r.card].slot+DH.cmap[r.card].idx)})}
 async function loadSt(){DH.st=await rpc('dh_status');S.pkOff=Date.parse(DH.st.now)-Date.now();const b=document.getElementById('dhbal');if(b)b.textContent=num(DH.st.balance);return DH.st}
 window.dhBoot=()=>{DH.ready=(async()=>{try{await loadCat();await Promise.all([loadSt(),loadInv()])}catch(e){DH.bad=true}})()};
 const free=id=>{const r=DH.inv[id];return r?r.qty-r.locked:0};
@@ -60,6 +60,8 @@ function pkTilt(){document.querySelectorAll('[data-pk]').forEach(p=>{if(p._t)ret
 
 /* ---------- PACK OPENING ---------- */
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+/* Server (dh_open_pack, SECURITY DEFINER) already wrote the cards; mirror its result locally at once so they show everywhere immediately. Server data is re-synced by loadInv() right after. */
+function applyPull(r){if(!r||!Array.isArray(r.cards))return;DH.inv=DH.inv||{};r.cards.forEach(id=>{const c=DH.cmap&&DH.cmap[id];if(!c)return;const x=DH.inv[id]||(DH.inv[id]={card:id,qty:0,locked:0});x.qty=(x.qty|0)+1;DZ.inv.add(c.slot+c.idx)});if(r.status)DH.st=r.status}
 function openFlow(){const st=DH.st;if(st.opened_today>=st.daily_cap)return toast('3 packs a day. Come back tomorrow!');if(st.balance<25)return toast('You need 25 tokens');
  document.querySelectorAll('.dhov').forEach(x=>x.remove());const ov=document.createElement('div'),one=localStorage.dhOne=='1';ov.className='dhov';document.body.append(ov);document.documentElement.style.overflow='hidden';
  let charge=0,last=0,done=false,raf=0,t0=performance.now(),taps=0;const close=()=>{cancelAnimationFrame(raf);ov.classList.remove('on');setTimeout(()=>ov.remove(),250);document.documentElement.style.overflow='';redo()};
@@ -69,9 +71,9 @@ function openFlow(){const st=DH.st;if(st.opened_today>=st.daily_cap)return toast
  let lc=-1;const paint=()=>{bar.style.transform=`scaleX(${charge/100})`;const q=Math.round(charge/5);if(q!=lc){lc=q;const k=q*.05;ov.style.setProperty('--ch',k);pk.style.setProperty('--gl',k);pk.style.setProperty('--sh',(k*6).toFixed(1)+'px')}};
  const tick=t=>{if(done)return;const dt=(t-(tick.l||t))/1000;tick.l=t;if(charge>0&&charge<100){charge=Math.max(0,charge-40*dt);paint()}raf=requestAnimationFrame(tick)};raf=requestAnimationFrame(tick);
  const burst=async()=>{if(done)return;done=true;hint.textContent='';pk.classList.add('tearing');ov.classList.add('flash');
-  const res=await Promise.all([rpc('dh_open_pack',{p_pack:'desert'}).then(async r=>{await Promise.race([Promise.all(r.cards.map(id=>{const m=new Image();m.src=artUri(DH.cmap[id]);return m.decode?m.decode().catch(()=>0):0})),sleep(1200)]);return{r}},e=>({e})),sleep(900)]).then(a=>a[0]);
+  const res=await Promise.all([rpc('dh_open_pack',{p_pack:'desert'}).then(async r=>{applyPull(r);await Promise.race([Promise.all(r.cards.map(id=>{const m=new Image();m.src=artUri(DH.cmap[id]);return m.decode?m.decode().catch(()=>0):0})),sleep(1200)]);return{r}},e=>({e})),sleep(900)]).then(a=>a[0]);
   if(res.e){toast(res.e.message);return close()}
-  DH.st=res.r.status;await loadInv();const b=document.getElementById('dhbal');if(b)b.textContent=num(DH.st.balance);reveal(ov,res.r,close)};
+  DH.st=res.r.status;await loadInv().catch(()=>{});const b=document.getElementById('dhbal');if(b)b.textContent=num(DH.st.balance);reveal(ov,res.r,close)};
  pk.addEventListener('pointerdown',e=>{if(done)return;if(!e.isTrusted)return;                    // scripted/synthetic clicks are ignored
   const now=performance.now();if(now-t0<500)return;                                                   // can't pre-fire before the pack is on screen
   if(one){burst();return}
