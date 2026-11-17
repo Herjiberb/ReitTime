@@ -459,7 +459,9 @@ const rankOf=pts=>{let i=0;RK.forEach((r,j)=>{if(pts>=r[0])i=j});const nx=RK[i+1
 const pkOwn=()=>new Set(PKI.filter(x=>S.pk&&S.pk.claims.includes(x[0])).map(x=>x[2]+x[3]));
 const piShow=(k,i)=>DZ.base[k]!=null&&i>=DZ.base[k]?(isAdm()||DZ.owned(k,i)):i<PIN[k]||isAdm()||(i>=PIA[k]&&pkOwn().has(k+i));
 const piCur=()=>PKDB?mp.icon:(mp.scene&&mp.scene.p&&mp.scene.p.pi);
-const piSave=async r=>{if(PKDB)await upd({icon:r||null});else{const sc=mp.scene||{},pp=sc.p||{};await upd({scene:{...sc,p:{...pp,pi:r||undefined}}})}};
+const piClean=r=>{if(!r||typeof r!='object')return null;if(r.f!==undefined&&Number.isInteger(+r.f))return {f:+r.f};const o={};['b','e','m','x'].forEach(k=>{const n=+r[k];o[k]=Number.isInteger(n)&&n>=0?n:0});return o};
+const piHard=()=>{try{PUC.clear()}catch{}document.querySelectorAll('img.av').forEach(i=>{const u=i.src;i.src='';i.src=u});setTimeout(()=>location.reload(),150)};
+const piSave=async r=>{const c=r?piClean(r):null;const go=async()=>{if(PKDB)return sb.from('profiles').update({icon:c}).eq('id',me.id).select().single();const sc=mp.scene||{},pp=sc.p||{};return sb.from('profiles').update(await zprof({scene:{...sc,p:{...pp,pi:c||undefined}}})).eq('id',me.id).select().single()};let x=await go();if(x.error&&/icon/i.test(x.error.message||'')){await loadPk();x=await go()}if(x.error)return toast(x.error.message);await zfix(x.data);mp=x.data;PUC.clear();R();toast('Saved');if(!c)piHard()};
 const srvNow=()=>Date.now()+(S.pkOff||0);
 async function loadPk(){if(!PKDB)return null;try{const {data,error}=await sb.rpc('pack_status');if(error||!data)return null;S.pk=data;S.pkAt=Date.now();S.pkOff=Date.parse(data.now)-Date.now();return data}catch{return null}}
 const userPts=async id=>{try{const {data}=await sb.from('pack_claims').select('pts').eq('user_id',id);return(data||[]).reduce((a,x)=>a+x.pts,0)}catch{return 0}};
@@ -684,9 +686,9 @@ Object.assign(acts,{
  async feat(d){await sb.from('communities').update({featured:d.f!='true'}).eq('id',d.id);R()},
  async delc2(d){if(!confirm('Delete community?'))return;await sb.from('communities').delete().eq('id',d.id);location.hash='#/c'},
  editpi(){piEditor(piCur(),piSave,!!piCur())},
- equippk(d){const x=PKI.find(q=>q[0]==d.id);if(!x)return;const c={b:0,e:0,m:0,x:0,...(piCur()||{})};c[x[2]]=x[3];piEditor(c,piSave,!!piCur())},
+ equippk(d){const x=PKI.find(q=>q[0]==d.id);if(!x)return;const cur=piCur()||{};const c={b:0,e:0,m:0,x:0,...(cur.f!==undefined?{}:cur)};delete c.f;c[x[2]]=x[3];piEditor(c,piSave,!!piCur())},
  async claimpk(d,el){el.disabled=true;const {data,error}=await sb.rpc('claim_pack',{p_item:d.id});if(error){el.disabled=false;return toast(error.message)}S.pk=data;S.pkAt=Date.now();S.pkOff=Date.parse(data.now)-Date.now();toast('Unlocked! Tap Equip to wear it');R()},
- editch(){editScene(mp.scene,async s=>{await upd({scene:s})})},
+ editch(){editScene(mp.scene,async s=>{await upd({scene:s});PUC.clear();document.querySelectorAll('img.av:not(.pic),img.scn').forEach(i=>{const u=i.src;i.src='';i.src=u});R()})},
  editp(){const p=(mp.scene&&mp.scene.p)||{};let sc=mp.scene;
   sheet(`<h3>${ic('pen',22)} Edit profile</h3><input id="ed" value="${esc(mp.display_name)}" placeholder="Display name" maxlength="40"><label class="ctl">Sex<select id="esx"><option value="">Unspecified</option><option value="male" ${p.sx=='male'?'selected':''}>Male</option><option value="female" ${p.sx=='female'?'selected':''}>Female</option></select></label><input id="est" value="${esc(p.st)}" placeholder="Status — what are you up to?" maxlength="60"><h4 class="sg">Current mood</h4><div class="chips" id="emo">${Object.entries(MOODS).map(([k,m])=>`<button type="button" class="chip ${p.mood==k?'sel':''}" data-k="${k}">${ic(m[1],18)} ${m[0]}</button>`).join('')}</div><h4 class="sg">About</h4><input id="el" value="${esc(p.loc)}" placeholder="Location" maxlength="40"><input id="ek" type="url" value="${esc(p.ln)}" placeholder="Website https://…" maxlength="200"><textarea id="eb" maxlength="200" placeholder="Bio">${esc(mp.bio)}</textarea>
   <h4 class="sg">Colors</h4><div class="cb2"><div class="cbh"><span>Accent</span><input type="color" id="ea" value="${hexOk(mp.accent)?mp.accent:'#ff8a1f'}"></div></div><div class="cb2"><div class="cbh"><span>Second color</span><input type="color" id="ea2" value="${hexOk(p.ac2)?p.ac2:'#2fd07a'}"></div></div>

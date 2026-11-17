@@ -1,1 +1,25 @@
-{"name":"ReitTime","short_name":"ReitTime","start_url":"./","scope":"./","display":"standalone","background_color":"#0d1210","theme_color":"#ff8a1f","icons":[{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}]}
+{
+ "name": "ReitTime \u2013 Social, Reals & Card Trading",
+ "short_name": "ReitTime",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#0d1210",
+ "theme_color": "#ff8a1f",
+ "icons": [
+  {
+   "src": "icon.svg",
+   "sizes": "any",
+   "type": "image/svg+xml",
+   "purpose": "any"
+  }
+ ],
+ "description": "ReitTime is a free social app to share posts, Reals, music, polls and custom characters, trade cards in Deck Hub, earn season-pass cosmetics and chat with friends.",
+ "lang": "en",
+ "categories": [
+  "social",
+  "entertainment"
+ ],
+ "orientation": "portrait-primary",
+ "id": "./"
+}
