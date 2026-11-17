@@ -11,7 +11,7 @@ const tc=n=>String(n||'').replace(/\S+/g,(w,i)=>i>0&&/^(of|the|and|a|in|on|over)
 const isTue=()=>new Date(srvNow()).getUTCDay()==2;
 const PACKS=PKR.meta();
 const curPack=()=>PACKS[localStorage.dhPack]?localStorage.dhPack:'desert',COST=()=>PACKS[curPack()].cost;
-const packOf=c=>PKR.packOf(c.slot,c.idx)||'desert';
+const packOf=c=>c.pack||PKR.packOf(c.slot,c.idx)||'desert';
 const packCards=pk=>(DH.cards||[]).filter(c=>packOf(c)==(pk||curPack()));
 Object.assign(I,{coin:cc(12,12,10,'#b97a08')+cc(12,12,8.6,'#ffd23a')+cc(12,12,6.4,'none','stroke="#b97a08" stroke-width="1.2"')+pp('M12 7.2l1.5 3.2 3.5.4-2.6 2.4.7 3.5L12 14.900l-3.100 1.800.7-3.500L7 10.800l3.500-.4z','#b97a08')+pp('M7 5.500Q10 3.500 14 4','rgba(255,255,255,.7)'),
  cards:pp('M6 5h8a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z',G,'transform="rotate(-10 10 12)"')+pp('M10 4h8a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z',O,'transform="rotate(8 14 11)"')+pp('M14 8.500l1 2.100 2.300.3-1.700 1.600.4 2.300-2-1.100-2 1.100.4-2.300-1.700-1.600 2.300-.3z',W)});
