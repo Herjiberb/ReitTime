@@ -286,3 +286,14 @@ body.sx #top .brand{display:none}body.sx .sf{flex:1}body.sx .sf.on input{flex:1;
 .dcwrap.build{will-change:transform,filter}
 .dhnew,.dcnew{will-change:transform}
 @media(max-width:480px){.dhbeams{width:130vmax;height:130vmax}}
+
+/* Eldritch rarity + shared pack info */
+.r-eldritch .dcs{opacity:.7}.r-eldritch{animation:dhglow 2s ease-in-out infinite}
+.r-eldritch .dcf::before{content:"";position:absolute;inset:-40%;background:conic-gradient(from 0deg,transparent,rgba(120,255,190,.4),transparent 25%,rgba(178,102,255,.5),transparent 55%,rgba(255,60,90,.3),transparent 80%);animation:dhspin 5s linear infinite}
+.t-eldritch{--rc:#5dffa0}
+.dhbl{display:flex;flex-direction:column;gap:6px;margin:4px 0}.dhbl .ln{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:14px}
+.dhbl .sl{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;background:var(--bd);color:var(--tx)}
+.dhbl .tp{display:inline-flex;align-items:center;gap:5px;font-weight:700;color:var(--rc);padding:2px 8px 2px 4px;border-radius:99px;background:color-mix(in srgb,var(--rc) 14%,transparent)}
+.dco.sub .sl{display:inline-flex;vertical-align:-5px;margin-right:6px;color:var(--mu)}
+.dhbonus{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:99px;background:linear-gradient(90deg,#ffb21f,#ff6a3a);color:#fff;font-weight:800;font-size:12px}
+@media (prefers-reduced-motion:reduce){.r-eldritch .dcf::before{animation:none}}
