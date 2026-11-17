@@ -26,10 +26,10 @@ let busy=false;const lock=async f=>{if(busy)return;busy=true;try{return await f(
 
 /* ---------- data ---------- */
 async function loadCat(){if(DH.cards&&DH.cards.length)return;const {data,error}=await sb.from('dh_cards').select('*').order('odds_w',{ascending:false});if(error||!data||!data.length){DH.cards=null;DH.cmap={};throw new Error('Could not load cards'+(error?': '+error.message:' (empty)'))}DH.cards=data;DH.cmap={};DH.cards.forEach(c=>{c.rarity=String(c.rarity||'').trim().toLowerCase();if(!RAR[c.rarity])c.rarity='common';if(!SLOT[c.slot])c.slot='x';c.idx=+c.idx||0;c.odds_w=+c.odds_w||0;c.name=tc(c.name||('Card '+c.id));DH.cmap[c.id]=c})}
-async function loadInv(){const {data,error}=await sb.from('dh_inv').select('card,qty,locked').eq('user_id',me.id);if(error)return;DH.inv={};PKR.inv.clear();(data||[]).forEach(r=>{DH.inv[r.card]=r;if(r.qty>0&&DH.cmap[r.card])PKR.inv.add(DH.cmap[r.card].slot+DH.cmap[r.card].idx)})}
+async function loadInv(){if(typeof me=='undefined'||!me)return;const {data,error}=await sb.from('dh_inv').select('card,qty,locked').eq('user_id',me.id);if(error)return;DH.inv={};PKR.inv.clear();(data||[]).forEach(r=>{DH.inv[r.card]=r;if(r.qty>0&&DH.cmap[r.card])PKR.inv.add(DH.cmap[r.card].slot+DH.cmap[r.card].idx)})}
 async function loadSt(){DH.st=await rpc('dh_status');S.pkOff=Date.parse(DH.st.now)-Date.now();const b=document.getElementById('dhbal');if(b)b.textContent=num(DH.st.balance);return DH.st}
-const claimRef=async()=>{const r=localStorage.rtRef;if(!r)return;try{const {data,error}=await sb.rpc('dh_claim_referral',{p_ref:r});if(!error&&data)setTimeout(()=>toast('Welcome! +50 bonus tokens from your invite'),800);else if(error)console.warn('referral:',error.message)}catch(e){}localStorage.removeItem('rtRef')};
-window.dhBoot=()=>{DH.ready=(async()=>{try{await claimRef();await loadCat();await Promise.all([loadSt(),loadInv()])}catch(e){DH.bad=true;DH.err=e}})()};
+const claimRef=async()=>{const r=localStorage.rtRef;if(!r)return;if(!localStorage.rtRefSU&&!window.__refSignup){localStorage.removeItem('rtRef');return}localStorage.removeItem('rtRefSU');try{const {data,error}=await sb.rpc('dh_claim_referral',{p_ref:r});if(!error&&data)setTimeout(()=>toast('Welcome! +50 bonus tokens from your invite'),800);else if(error)console.warn('referral:',error.message)}catch(e){}localStorage.removeItem('rtRef')};
+window.dhBoot=()=>{if(typeof me=='undefined'||!me)return;DH.bad=false;DH.err=null;DH.ready=(async()=>{try{await claimRef();await loadCat();await Promise.all([loadSt(),loadInv()])}catch(e){DH.bad=true;DH.err=e}})()};
 const free=id=>{const r=DH.inv[id];return r?r.qty-r.locked:0};
 const odds=()=>{const cs=packCards(),t=cs.reduce((a,c)=>a+c.odds_w,0),by={};cs.forEach(c=>by[c.rarity]=(by[c.rarity]||0)+c.odds_w);return{t,by,cs}};
 const packBlurb=k=>{const cs=packCards(k);if(!cs.length)return `<p class="mu">${esc(PACKS[k].tag||'')}</p>`;const sl=['f','b','e','m','x'].filter(s=>cs.some(c=>c.slot==s)),mx=Math.max(...cs.map(c=>RO.indexOf(c.rarity))),top=cs.filter(c=>RO.indexOf(c.rarity)==mx),R=RAR[RO[mx]];
@@ -54,7 +54,7 @@ const shell=(tab,body)=>`<div class="dhhead"><h2 class="h">${ic('cards',22)} Dec
 async function deckPg(b){try{return await deckPg0(b)}catch(e){console.error(e);A.innerHTML=`<h2 class="h">${ic('cards',22)} DeckHub</h2><p class="empty">DeckHub error: ${esc(e&&e.message||e)}</p>`}}
 async function deckPg0(b){b=b||'';if(!DH.ready)window.dhBoot();await DH.ready;
  if(DH.bad||!DH.st){DH.bad=false;try{await loadCat();await Promise.all([loadSt(),loadInv()])}catch(e){DH.bad=true;DH.err=e}}
- if(DH.bad||!DH.st||!DH.cards)return A.innerHTML=`<h2 class="h">${ic('cards',22)} DeckHub</h2><p class="empty">DeckHub failed to load: <b>${esc(DH.err&&DH.err.message||'unknown error')}</b><br><small>(If it says a function or relation does not exist, the migration is missing.)</small></p>`;
+ if(typeof me=='undefined'||!me)return;if(DH.bad||!DH.st||!DH.cards)return A.innerHTML=`<h2 class="h">${ic('cards',22)} DeckHub</h2><p class="empty">DeckHub failed to load: <b>${esc(DH.err&&DH.err.message||'unknown error')}</b><br><small>(If it says a function or relation does not exist, the migration is missing.)</small></p>`;
  await loadSt();await loadInv();
  if(b=='vault')return vaultPg();if(b=='market')return marketPg();if(b=='rewards')return rewardsPg();return shopPg()}
 window.deckPg=deckPg;
