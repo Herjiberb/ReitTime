@@ -11,7 +11,7 @@ const tc=n=>String(n||'').replace(/\S+/g,(w,i)=>i>0&&/^(of|the|and|a|in|on|over)
 const isTue=()=>new Date(srvNow()).getUTCDay()==2;
 const PACKS=PKR.meta();
 /* self-heal: if index.html did not load packs/ancient.js, load it now so the pack always appears */
-if(!PKR.packs.some(p=>p.id==='ancient')){const ld=(u,f)=>{const sc=document.createElement('script');sc.src=u;sc.onload=()=>{Object.assign(PACKS,PKR.meta());try{redo()}catch(e){}};sc.onerror=f;document.head.appendChild(sc)};ld('packs/ancient.js?v=7',()=>ld('ancient.js?v=7',()=>console.warn('Ancient pack file not found')))}
+if(!PKR.packs.some(p=>p.id==='ancient')){const ld=(u,f)=>{const sc=document.createElement('script');sc.src=u;sc.onload=()=>{Object.assign(PACKS,PKR.meta());try{PKR.fillNames(PI);PKR.picList().forEach((c,i)=>{if(c)PIC[25+i]=c})}catch(e){console.warn(e)}try{redo()}catch(e){}};sc.onerror=f;document.head.appendChild(sc)};ld('packs/ancient.js?v=7',()=>ld('ancient.js?v=7',()=>console.warn('Ancient pack file not found')))}
 const curPack=()=>PACKS[localStorage.dhPack]?localStorage.dhPack:'desert',COST=()=>PACKS[curPack()].cost;
 const packOf=c=>c.pack||PKR.packOf(c.slot,c.idx)||'desert';
 const packCards=pk=>(DH.cards||[]).filter(c=>packOf(c)==(pk||curPack()));
