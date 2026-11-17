@@ -297,3 +297,5 @@ body.sx #top .brand{display:none}body.sx .sf{flex:1}body.sx .sf.on input{flex:1;
 .dco.sub .sl{display:inline-flex;vertical-align:-5px;margin-right:6px;color:var(--mu)}
 .dhbonus{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:99px;background:linear-gradient(90deg,#ffb21f,#ff6a3a);color:#fff;font-weight:800;font-size:12px}
 @media (prefers-reduced-motion:reduce){.r-eldritch .dcf::before{animation:none}}
+
+.pki{display:inline-block;width:14px;height:21px;vertical-align:-5px;margin-right:6px}.pki svg{width:100%;height:100%;display:block}

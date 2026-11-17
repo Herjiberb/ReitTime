@@ -10,6 +10,8 @@ const sI=(s,z=16)=>`<svg viewBox="0 0 24 24" width="${z}" height="${z}" fill="no
 const tc=n=>String(n||'').replace(/\S+/g,(w,i)=>i>0&&/^(of|the|and|a|in|on|over)$/i.test(w)?w.toLowerCase():w[0].toUpperCase()+w.slice(1));
 const isTue=()=>new Date(srvNow()).getUTCDay()==2;
 const PACKS=PKR.meta();
+/* self-heal: if index.html did not load packs/ancient.js, load it now so the pack always appears */
+if(!PKR.packs.some(p=>p.id==='ancient')){const ld=(u,f)=>{const sc=document.createElement('script');sc.src=u;sc.onload=()=>{Object.assign(PACKS,PKR.meta());try{redo()}catch(e){}};sc.onerror=f;document.head.appendChild(sc)};ld('packs/ancient.js?v=7',()=>ld('ancient.js?v=7',()=>console.warn('Ancient pack file not found')))}
 const curPack=()=>PACKS[localStorage.dhPack]?localStorage.dhPack:'desert',COST=()=>PACKS[curPack()].cost;
 const packOf=c=>c.pack||PKR.packOf(c.slot,c.idx)||'desert';
 const packCards=pk=>(DH.cards||[]).filter(c=>packOf(c)==(pk||curPack()));
@@ -58,7 +60,7 @@ const redo=()=>deckPg((location.hash.split('/')[2])||'');
 
 /* ---------- SHOP ---------- */
 function shopPg(){const st=DH.st,left_=DAILY_CAP-st.opened_today,one=localStorage.dhOne=='1';
- A.innerHTML=shell('',`<div class="row wrap dhpks" style="gap:8px;margin:0 0 10px">${Object.entries(PACKS).map(([k,p])=>`<button type="button" class="chip ${k==curPack()?'sel':''}" data-act="dhpk" data-id="${k}">${p.n} · ${tok(p.cost,14)}</button>`).join('')}</div><div class="card dhshop"><div class="dhstage"><div class="dhaura"></div>${packH({cls:'idle'})}</div><div class="dhinfo"><div class="dhtt"><h3>${PACKS[curPack()].n}</h3><button type="button" class="dhi" data-act="dhodds" aria-label="Drop odds">i</button></div>${packBlurb(curPack())}<div class="row wrap" style="gap:10px"><span class="mu">Cost</span>${tok(COST(),20)}<span class="mu">·</span><span class="mu">${left_} of ${DAILY_CAP} packs left today</span></div><button type="button" class="btn dhgo" data-act="dhopen" ${left_<1||st.balance<COST()?'disabled':''}>${left_<1?'Daily limit reached':st.balance<COST()?'Need '+COST()+' tokens':'Open pack'}</button>${st.balance<COST()&&left_>0?`<a class="chip" href="#/deck/rewards">${ic('star',16)} Earn tokens</a>`:''}</div></div>
+ A.innerHTML=shell('',`<div class="row wrap dhpks" style="gap:8px;margin:0 0 10px">${Object.entries(PACKS).map(([k,p])=>`<button type="button" class="chip ${k==curPack()?'sel':''}" data-act="dhpk" data-id="${k}"><span class="pki">${PKR.packArt(k)}</span>${p.n} · ${tok(p.cost,14)}</button>`).join('')}</div><div class="card dhshop"><div class="dhstage"><div class="dhaura"></div>${packH({cls:'idle'})}</div><div class="dhinfo"><div class="dhtt"><h3>${PACKS[curPack()].n}</h3><button type="button" class="dhi" data-act="dhodds" aria-label="Drop odds">i</button></div>${packBlurb(curPack())}<div class="row wrap" style="gap:10px"><span class="mu">Cost</span>${tok(COST(),20)}<span class="mu">·</span><span class="mu">${left_} of ${DAILY_CAP} packs left today</span></div><button type="button" class="btn dhgo" data-act="dhopen" ${left_<1||st.balance<COST()?'disabled':''}>${left_<1?'Daily limit reached':st.balance<COST()?'Need '+COST()+' tokens':'Open pack'}</button>${st.balance<COST()&&left_>0?`<a class="chip" href="#/deck/rewards">${ic('star',16)} Earn tokens</a>`:''}</div></div>
  <h4 class="sg">Your ${PACKS[curPack()].n.replace(' Pack','')} collection</h4>${collGrid()}
  <p class="dhfine"><button type="button" class="dhcog" data-act="dhcog" aria-label="Pack settings">${ic('gear',14)}</button></p>`);
  pkTilt()}
