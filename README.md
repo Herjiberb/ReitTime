@@ -15,7 +15,7 @@ ReitTime is a free social app to share posts, Reals, music, polls and custom cha
 Static site (HTML/CSS/vanilla JS) on GitHub Pages with a [Supabase](https://supabase.com) backend.
 
 ## Files
-`index.html` app shell and SEO metadata · `app.js` core app · `deckhub.js` card marketplace · `deckart.js` card art · `legal.js` legal pages · `app.css`/`theme.css` styles · `sw.js` service worker · `manifest.json` PWA manifest · `robots.txt`/`sitemap.xml` search indexing
+`index.html` app shell and SEO metadata · `app.js` core app · `deckhub.js` card marketplace · `packs/` one file per card pack (`registry.js`, `desert.js`, `ice.js`; see `packs/README.md`) · `legal.js` legal pages · `app.css`/`theme.css` styles · `sw.js` service worker · `manifest.json` PWA manifest · `robots.txt`/`sitemap.xml` search indexing
 
 ## Run locally
 Serve the folder with any static server (e.g. `npx serve .`) and open it in a browser.
