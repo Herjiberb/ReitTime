@@ -11,6 +11,7 @@ return{defs,e60,m60,b60,x60,f60};
 })();
 PKR.register({id:'newpack',name:'New Pack',tag:'Short tagline',cost:20,blurb:'3 cards · what is inside.',
  defs:NZ.defs,
+ pack:()=>`<svg viewBox="0 0 200 300" class="pksvg"><rect width="200" height="300" rx="10" fill="#58f"/><text x="100" y="160" text-anchor="middle" fill="#fff" font-size="30">NEW</text></svg>`, /* foil pack art: copy desert.js packSVG or ice.js icePack as a starting point */
  parts:{
   e:{60:{id:'new_eyes',name:'Example eyes',art:NZ.e60,rarity:'common',odds:5000}},
   m:{60:{id:'new_mouth',name:'Example mouth',art:NZ.m60,rarity:'rare',odds:5000}}},

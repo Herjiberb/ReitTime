@@ -1,7 +1,7 @@
 /* DeckHub pack registry. Loaded FIRST (before packs/*.js and app.js).
    Each pack file calls PKR.register({...}); app.js and deckhub.js only ever talk to PKR, never to a specific pack.
    Pack shape (see packs/_template.js):
-     id, name, tag, blurb, cost, defs (SVG <defs> string),
+     id, name, tag, blurb, cost, defs (SVG <defs> string), pack (function returning the 200x300 foil pack SVG, class="pksvg"),
      parts: { b:{idx:{name,art,id?,rarity?,odds?}}, e:{...}, m:{...}, x:{...}, f:{...} }   b=skin e=eyes m=mouth x=extra f=full icon
      pic:   { skinIdx:[gradient colours] }   (colours for the skin background)
    art signatures: e(x) -> SVG (x = 33 or 67), m()/x()/b()/f() -> SVG strings in a 100x100 viewBox.
@@ -24,6 +24,7 @@ return{register,packs,inv,
  isPack:(s,i)=>!!parts[s][i],owned:(s,i)=>inv.has(s+i),packOf:(s,i)=>owner[s+i]||null,
  hasFull:()=>Object.keys(parts.f).some(i=>inv.has('f'+i))||(typeof isAdm=='function'&&isAdm()),
  fillNames:PI=>S.forEach(s=>Object.entries(parts[s]).forEach(([i,d])=>{PI[s][i]=d.name})),
+ packArt:id=>{const p=packs.find(q=>q.id===id)||packs[0];return p&&p.pack?p.pack():''},
  meta:()=>Object.fromEntries(packs.map(p=>[p.id,{n:p.name,tag:p.tag,cost:p.cost,blurb:p.blurb}])),
  cards:id=>S.flatMap(s=>Object.entries(parts[s]).filter(([i])=>owner[s+i]===id).map(([i,d])=>({id:d.id,name:d.name,rarity:d.rarity,slot:s,idx:+i,odds_w:d.odds})))};
 })();
