@@ -9,9 +9,10 @@ const SI={f:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.500 4-6.500 8-6.50
 const sI=(s,z=16)=>`<svg viewBox="0 0 24 24" width="${z}" height="${z}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SI[s]||''}</svg>`;
 const tc=n=>String(n||'').replace(/\S+/g,(w,i)=>i>0&&/^(of|the|and|a|in|on|over)$/i.test(w)?w.toLowerCase():w[0].toUpperCase()+w.slice(1));
 const isTue=()=>new Date(srvNow()).getUTCDay()==2;
-const PACKS=Object.fromEntries(Object.entries(PKR.meta()).filter(([k])=>!(window.SPK&&SPK[k])));  /* ticket-only packs never appear in the shop */
+const shopMeta=()=>Object.fromEntries(Object.entries(PKR.meta()).filter(([k])=>!(window.SPK&&SPK[k])));
+const PACKS=shopMeta();  /* ticket-only packs never appear in the shop */
 /* self-heal: if index.html did not load packs/ancient.js, load it now so the pack always appears */
-if(!PKR.packs.some(p=>p.id==='ancient')){const ld=(u,f)=>{const sc=document.createElement('script');sc.src=u;sc.onload=()=>{Object.assign(PACKS,PKR.meta());try{PKR.fillNames(PI);PKR.picList().forEach((c,i)=>{if(c)PIC[25+i]=c})}catch(e){console.warn(e)}try{redo()}catch(e){}};sc.onerror=f;document.head.appendChild(sc)};ld('packs/ancient.js?v=7',()=>ld('ancient.js?v=7',()=>console.warn('Ancient pack file not found')))}
+if(!PKR.packs.some(p=>p.id==='ancient')){const ld=(u,f)=>{const sc=document.createElement('script');sc.src=u;sc.onload=()=>{Object.assign(PACKS,shopMeta());try{PKR.fillNames(PI);PKR.picList().forEach((c,i)=>{if(c)PIC[25+i]=c})}catch(e){console.warn(e)}try{redo()}catch(e){}};sc.onerror=f;document.head.appendChild(sc)};ld('packs/ancient.js?v=7',()=>ld('ancient.js?v=7',()=>console.warn('Ancient pack file not found')))}
 const curPack=()=>PACKS[localStorage.dhPack]?localStorage.dhPack:'desert',COST=()=>PACKS[curPack()].cost;
 const packOf=c=>c.pack||PKR.packOf(c.slot,c.idx)||'desert';
 const packCards=pk=>(DH.cards||[]).filter(c=>packOf(c)==(pk||curPack()));
