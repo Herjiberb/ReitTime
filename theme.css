@@ -445,3 +445,5 @@ html:has(.refx),html:has(.refx) body{overflow:hidden}
 .pact .pa-t:hover{border-color:var(--ac)}.pact .pa-t:active,.pact .pa-s:active,.pact .pa-main:active{transform:scale(.96)}
 .pact .pa-t svg{filter:none}
 @media(max-width:340px){.pact .pa-main{grid-column:span 12}.pact .pa-s{grid-column:span 6}}
+.prof>.row.pact .pa-main{background:linear-gradient(135deg,color-mix(in srgb,var(--ac) 72%,#000),color-mix(in srgb,var(--ac) 52%,#000));color:#fff;gap:8px;text-shadow:0 1px 1px rgba(0,0,0,.25)}
+.pact .pa-main svg{box-sizing:content-box;width:18px;height:18px;padding:4px;border-radius:50%;background:#fff;flex:none}
