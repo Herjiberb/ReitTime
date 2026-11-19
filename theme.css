@@ -436,3 +436,12 @@ html:has(.refx),html:has(.refx) body{overflow:hidden}
 .sa-empty{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:26px 16px}.sa-empty svg{width:44px;height:44px}.sa-empty h3{margin:0}.sa-empty code{background:var(--bd);padding:1px 6px;border-radius:6px}
 .sa-ft{display:flex;gap:6px;align-items:flex-start;font-size:12px;line-height:1.4;margin:6px 4px 90px}
 @media(prefers-reduced-motion:reduce){.bl-bd,.bl-burst,.bl-w,.pl-ban i,.nt.new{animation:none!important}.ftabs::before{transition:none}}
+
+/* ---- Profile actions ---- */
+.prof>.row.pact{display:grid;grid-template-columns:repeat(12,1fr);gap:8px;padding:4px 12px 14px}
+.pact .pa-main{grid-column:span 6;justify-content:center;min-height:46px;font-weight:800}
+.pact .pa-s{grid-column:span 3;justify-content:center;min-height:46px;padding:0 8px;border:1px solid var(--bd);background:var(--cd);color:var(--tx);font-weight:700}
+.pact .pa-t{grid-column:span 4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px 6px;border-radius:18px;border:1px solid var(--bd);background:linear-gradient(160deg,color-mix(in srgb,var(--ac) 10%,transparent),transparent 70%),var(--cd);color:var(--tx);text-decoration:none;font-size:13px;font-weight:700;transition:transform .2s,border-color .2s}
+.pact .pa-t:hover{border-color:var(--ac)}.pact .pa-t:active,.pact .pa-s:active,.pact .pa-main:active{transform:scale(.96)}
+.pact .pa-t svg{filter:none}
+@media(max-width:340px){.pact .pa-main{grid-column:span 12}.pact .pa-s{grid-column:span 6}}
